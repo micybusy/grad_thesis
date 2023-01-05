@@ -35,3 +35,23 @@ def wcomplex():
     g.vs['name'] = ['X', 'Y', 'Z', 'T', 'S', 'U', 'W', 'V']
     g.es['weight'] = weights
     return g
+
+
+def wcomplex2():
+    edges   = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [0, 5],
+               [1, 5], [2, 4], [2, 5]]
+    weights = [2, 6, 9, 3, 2, 8, 5, 1, 3]
+
+    g = ig.Graph(edges = edges)
+    g.vs['name'] = ['A', 'B', 'E', 'C', 'F', 'D']
+    g.es['weight'] = weights
+    return g
+
+def wcomplex3():
+    edges = [[0, 1], [0, 3], [1, 2], [3, 2], [2, 4], [2, 5],
+             [4, 5]]
+    weights = [1, 2, 3, 4, 5, 6, 7]
+    g = ig.Graph(edges = edges)
+    g.vs['name'] = ['A', 'B', 'C', 'D', 'E', 'F']
+    g.es['weight'] = weights
+    return g
