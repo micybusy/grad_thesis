@@ -70,7 +70,7 @@ def generate_with_input(directed = False, weighted = False):
     return g
 
 
-def plotter(graph, weighted: bool):
+def plotter(graph, weighted = False):
     x = graph.es['weight'] if weighted else None
     _, ax = plt.subplots(figsize=(8,8))
     ig.plot(graph, target= ax, vertex_label = graph.vs['name'], edge_label = x) 

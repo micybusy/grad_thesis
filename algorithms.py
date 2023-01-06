@@ -1,15 +1,14 @@
-from samples import weighted, wcomplex, wcomplex2, wcomplex3, disconnected
+from samples import *
 from genesis import plotter, generate_with_input
 import igraph as ig
-
-def dfs(graph, v,  tail = []):
+from copy import copy
+def dfs(graph, v,  tail = [], weighted = False):
     tail.append(v)
     nachbarn = graph.neighbors(v)
     if nachbarn:
         for w in nachbarn:
             if w not in tail:
-                dfs(graph, w, tail)
-    named_tail = [graph.vs[vertex]['name'] for vertex in tail]
+                dfs(graph, w, tail, weighted)
     edges = [(edge.source, edge.target) for edge in graph.es]
     path = []
     for ix, item in enumerate(tail):
@@ -28,9 +27,12 @@ def dfs(graph, v,  tail = []):
                     temp -= 1
     dfs_tree = ig.Graph(edges = path)
     dfs_tree.vs['name'] = [graph.vs[vertex.index]['name'] for vertex in dfs_tree.vs]
-    for edge in dfs_tree.es:
-        certain = [item['weight'] for item in graph.es if (item.source, item.target) == (edge.source, edge.target)]
-        edge['weight'] = certain[0]
+    if weighted:
+        for edge in dfs_tree.es:
+            certain = [item['weight'] for item in graph.es if (item.source, item.target) == (edge.source, edge.target)]
+            edge['weight'] = certain[0]
+
+    path = [(graph.vs[item[0]]['name'], graph.vs[item[1]]['name']) for item in path]
     return path, dfs_tree
 
 
@@ -117,8 +119,14 @@ def dijkstra(graph, source, target):
     return path
 
 
-defese = dfs(weighted(), 0)
-plotter(defese[1], weighted= True)
-plotter(weighted(), weighted= True)
+def articulation_point(graph):
+    vertices = [vertex.index for vertex in list(graph.vs())]
+    articulation_points = []
+    for vertex in vertices:
+        x = graph.copy()
+        x.delete_vertices(vertex)
+        if not x.is_connected():
+            articulation_points.append(graph.vs[vertex]['name'])
+                
+    return articulation_points
 
-# dfs is working fine. now implement articulation point & biconnected components algorithm. https://youtu.be/jFZsDDB0-vo
