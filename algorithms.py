@@ -1,7 +1,6 @@
 from samples import *
 from genesis import plotter, generate_with_input
 import igraph as ig
-from copy import copy
 def dfs(graph, v,  tail = [], weighted = False):
     tail.append(v)
     nachbarn = graph.neighbors(v)
@@ -37,6 +36,14 @@ def dfs(graph, v,  tail = [], weighted = False):
 
 
 def kruskal(graph):
+
+    '''
+    This function computes a Minimum Spanning Tree of the graph using Kruskal's Algorithm
+    ''' 
+
+    if not graph.is_connected():
+        print("The graph must be connected in order for Kruskal's algorithm to work.")
+        return
     source_target = [(edge.source, edge.target, edge['weight']) for edge in graph.es]
     source_target = sorted(source_target, key = lambda x: x[2])
     visited = {vertex.index: False for vertex in graph.vs}
@@ -61,6 +68,14 @@ def kruskal(graph):
 
 
 def dijkstra(graph, source, target):
+
+    '''
+    This function computes the shortest path from a source node to a target node
+    with dijkstra's algorithm.
+    '''
+
+    if not graph.is_connected():
+        print("The graph must be connected in order for Dijkstra's algorithm to work.")
     source_name = graph.vs[source]['name']
     target_name = graph.vs[target]['name']
     distances = {vertex.index: [float('inf'), None] for vertex in graph.vs if vertex.index != source}
@@ -130,3 +145,72 @@ def articulation_point(graph):
                 
     return articulation_points
 
+def find_bridges(graph):
+    edges = [(edge.source, edge.target) for edge in list(graph.es())]
+    num_clusters = len(graph.connected_components())
+    plotter(graph)
+    bridges = []
+    for edge in edges:
+        x = graph.copy()
+        x.delete_edges(edge)
+        if len(x.connected_components()) != num_clusters:
+            bridges.append(edge)
+    if not bridges:
+        print("There are no bridges on this graph.")
+        return
+    return bridges
+
+
+def biconnected_components(graph):
+    points = articulation_point(graph)
+    bicons = []
+    if not points:
+        print("There are no biconnected components on this graph.")
+        return
+    for point in points:
+        x = graph.copy()
+        x.delete_vertices(point)
+        bicons.append(x)
+    return bicons
+
+
+
+def ddfs(graph, v, tail = []):
+    vertices = [vertex.index for vertex in graph.vs]
+    if v not in tail:
+        nachbarn = graph.neighbors(v, 'out')
+        tail.append(v)
+        for vertex in nachbarn:
+            ddfs(graph, vertex, tail)
+    if set(tail) == set(vertices):
+        return tail
+    else:
+        left = [vertex for vertex in vertices if vertex not in tail]
+        for vertex in left:
+            ddfs(graph, vertex, tail)
+
+def reverse(graph):
+    redges = [(edge.target, edge.source) for edge in graph.es()]
+    rgraph = ig.Graph(edges = redges, directed = graph.is_directed())
+    rgraph.vs['name'] = graph.vs['name']
+    return rgraph
+
+'''def strongly_connected_components(graph):
+    if not graph.is_directed():
+        print("This search requires a directed graph, the input was not directed.")
+        return
+    visited = []
+    str_dfs = ddfs(graph, 0)[::-1]'''
+
+#print(dfs(wcomplex3(directed= False), 0))
+#print(ddfs(scc(), 0))
+
+plotter(wcomplex4())
+x = biconnected_components(wcomplex4())
+for item in x:
+    plotter(item)
+'''
+
+find a way to measure the finish time of nodes while doing dfs. then follow this tutorial.
+https://www.hackerearth.com/practice/algorithms/graphs/strongly-connected-components/tutorial/
+''' 
