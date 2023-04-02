@@ -62,7 +62,8 @@ def generate_with_input(directed = False, weighted = False):
                 mapp[edge] = counter
                 counter += 1
             conns.append([mapp[inp], mapp[edge]])
-
+            
+    print(conns)
     g = ig.Graph(n = len(mapp), edges = conns, directed = directed)
     g.vs['name'] = list(mapp.keys())
     if weighted:
@@ -75,3 +76,7 @@ def plotter(graph, weighted = False):
     _, ax = plt.subplots(figsize=(8,8))
     ig.plot(graph, target= ax, vertex_label = graph.vs['name'], edge_label = x) 
     plt.show()    
+
+if __name__ == "__main__":
+    g = generate_with_input(directed=False, weighted=False)
+    plotter(g)

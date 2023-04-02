@@ -205,8 +205,6 @@ def reverse(graph):
 #print(dfs(wcomplex3(directed= False), 0))
 #print(ddfs(scc(), 0))
 
-plotter(wcomplex2(directed= True), weighted=  True)
-print(dijkstra(wcomplex2(directed= True), 0, 4))
 
 '''
 
