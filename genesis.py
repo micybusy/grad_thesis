@@ -73,9 +73,10 @@ def generate_with_input(directed = False, weighted = False):
 
 def plotter(graph, weighted = False):
     x = graph.es['weight'] if weighted else None
-    _, ax = plt.subplots(figsize=(8,8))
-    ig.plot(graph, target= ax, vertex_label = graph.vs['name'], edge_label = x) 
-    plt.show()    
+    #_, ax = plt.subplots(figsize=(8,8))
+    v_count = graph.vcount()
+    ig.plot(graph, 'graph.png', vertex_label = graph.vs['name'], edge_label = x, margin = 220, vertex_size = 40-v_count, vertex_color = 'green') 
+    #plt.show()
 
 if __name__ == "__main__":
     g = generate_with_input(directed=False, weighted=False)
