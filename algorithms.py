@@ -1,39 +1,35 @@
 from samples import *
 from genesis import plotter, generate_with_input
 import igraph as ig
-def dfs(graph, v,  tail = [], weighted = False):
-    tail.append(v)
-    nachbarn = graph.neighbors(v)
-    if nachbarn:
-        for w in nachbarn:
-            if w not in tail:
-                dfs(graph, w, tail, weighted)
-    edges = [(edge.source, edge.target) for edge in graph.es]
-    path = []
-    for ix, item in enumerate(tail):
-        if ix == len(tail)-1:
-            break
-        pair = (item, tail[ix+1])
-        if pair in edges:
-            path.append(pair)
-        else:
-            temp = ix
-            while True:
-                if (tail[temp], tail[ix+1]) in edges:
-                    path.append((tail[temp], tail[ix+1]))
-                    break
-                else:
-                    temp -= 1
-    dfs_tree = ig.Graph(edges = path)
-    dfs_tree.vs['name'] = [graph.vs[vertex.index]['name'] for vertex in dfs_tree.vs]
-    if weighted:
-        for edge in dfs_tree.es:
-            certain = [item['weight'] for item in graph.es if (item.source, item.target) == (edge.source, edge.target)]
-            edge['weight'] = certain[0]
 
-    path = [(graph.vs[item[0]]['name'], graph.vs[item[1]]['name']) for item in path]
-    return path, dfs_tree
+def dfs(graph, v):
+        nv = graph.vcount()
+        added = [False for v in range(nv)]
+        left_nodes = []
+        vids = []
+        left_nodes.append((v, graph.neighbors(v)))
+        vids.append(v)
+        added[v] = True
 
+        while left_nodes:
+            v, neighbors = left_nodes[-1]
+            if neighbors:
+                neighbor = neighbors.pop()
+                if not added[neighbor]:
+                    left_nodes.append((neighbor, graph.neighbors(neighbor)))
+                    vids.append(neighbor)
+                    added[neighbor] = True
+            else:
+                left_nodes.pop()
+        path = []
+        for  ix, item in enumerate(vids):
+            if ix != len(vids) - 1:
+                path.append((item, vids[ix+1]))
+
+        dfs_tree = ig.Graph(edges = path)
+        dfs_tree.vs['name'] = [graph.vs[vertex.index]['name'] for vertex in dfs_tree.vs]
+        named_path = ' -> '.join([graph.vs[idx]['name'] for idx in vids])
+        return named_path, dfs_tree
 
 def kruskal(graph):
 

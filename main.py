@@ -5,6 +5,7 @@ from genesis import *
 import igraph as ig
 from PIL import ImageTk, Image
 import os
+import sys
 
 class UI:
 
@@ -20,6 +21,7 @@ class UI:
         self.root.geometry('1200x600')
         self.clicked = tk.StringVar()
         self.clicked.set( "Algorithm" )
+        self.selected_node = tk.StringVar()
 
 
         self.main_frame = tk.Frame(self.root)
@@ -73,6 +75,11 @@ class UI:
         self.apply_algorithm_button = tk.Button(self.left_frame, text = 'Apply Algorithm', command = lambda: self.apply_algorithm(self.clicked))
         self.apply_algorithm_button.grid(row = 9, column=0)
 
+
+
+
+        self.restart_button = tk.Button(self.right_frame, text = 'Restart', command = lambda: self.restart())
+        self.restart_button.grid(row = 1, column=5)
 
         self.display_graph()
         self.root.mainloop()
@@ -159,23 +166,26 @@ class UI:
 
 
     def apply_algorithm(self, algorithm):
+        algorithm = algorithm.get()
         algo_to_function = {'DFS': self.apply_dfs(self.graph)}
         return algo_to_function.get(algorithm)
 
 
-    def apply_dfs(self, graph):
-        self.selected_node = tk.StringVar()
-        self.selected_node.set(self.node_list[0])
+    def get_dfs_node(self):
         self.node_drop = tk.OptionMenu(self.left_frame, self.selected_node, *self.node_list)
         self.node_drop.grid(row=10, column=0)
-        x = self.selected_node.get()
+        return self.selected_node.get()
+    
+    
+    def apply_dfs(self, graph):
+        x = self.get_dfs_node()
         if x in self.node_list:
-            path, dfs_graph = dfs(graph, self.node_dict.get(x), weighted=self.weight_var)
+            path, dfs_graph = dfs(graph, self.node_dict.get(x))
             self.path = tk.Label(self.left_frame, text=path)
             self.path.grid(row = 11, column=0)
 
-            x = self.graph.es['weight'] if self.weight_var else None
-            ig.plot(dfs_graph, os.path.join('tmp', 'dfs_graph.png'), vertex_label = self.graph.vs['name'], edge_label = x)
+            
+            ig.plot(dfs_graph, os.path.join('tmp', 'dfs_graph.png'), vertex_label = self.graph.vs['name'])
 
             img = Image.open(os.path.join(os.getcwd(), 'tmp', 'dfs_graph.png'))
             photo_image = ImageTk.PhotoImage(img)
@@ -191,6 +201,8 @@ class UI:
 
 
 
-        
+    def restart(self):
+        python = sys.executable
+        os.execl(python, python, * sys.argv)
 
 UI() 

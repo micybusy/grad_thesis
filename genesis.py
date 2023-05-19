@@ -1,6 +1,7 @@
 import igraph as ig
 import matplotlib.pyplot as plt
 from samples import connected, disconnected, consecutive
+from algorithms import *
 import os
 
 
@@ -64,7 +65,6 @@ def generate_with_input(directed = False, weighted = False):
                 counter += 1
             conns.append([mapp[inp], mapp[edge]])
             
-    print(conns)
     g = ig.Graph(n = len(mapp), edges = conns, directed = directed)
     g.vs['name'] = list(mapp.keys())
     if weighted:
@@ -77,8 +77,8 @@ def plotter(graph, weighted = False):
     #_, ax = plt.subplots(figsize=(8,8))
     v_count = graph.vcount()
     ig.plot(graph, os.path.join('tmp', 'graph.png'), vertex_label = graph.vs['name'], edge_label = x, margin = 220, vertex_size = 40-v_count, vertex_color = 'green') 
-    #plt.show()
+    plt.show()
 
 if __name__ == "__main__":
-    g = generate_with_input(directed=False, weighted=False)
+    g = connected()
     plotter(g)
