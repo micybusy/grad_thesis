@@ -1,4 +1,5 @@
-.history
+.history/*
 __pycache__
 graph.png
 tmp
+history
