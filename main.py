@@ -15,18 +15,24 @@ class UI:
         self.weight_dict = {}
         self.row_count = 1
         self.root = tk.Tk()
-        self.algorithms = ['DFS', 'Kruskal']
+        self.algorithms = ['DFS', 'Kruskal', 'Dijkstra']
         self.weight_var = tk.BooleanVar()
         self.weight_var = False
         self.root.title('Graph Theory')
         self.root.geometry('1200x600')
         self.clicked = tk.StringVar()
         self.clicked.set( "Algorithm" )
-        self.selected_node = tk.StringVar()
+        self.dfs_node = tk.StringVar(value = "DFS Node")
+        self.dfs_node.trace('w', self.dfs_node_detector)
         self.png_size = (0, 0, 500, 300)
         self.edge_count = 0
-
-
+        self.dijkstra_source = tk.StringVar(value = "Source")
+        self.dijkstra_source.trace('w', self.dijkstra_node_detector)
+        self.dijkstra_target = tk.StringVar(value="Target")
+        self.dijkstra_target.trace('w', self.dijkstra_node_detector)
+        self.current_algortihm = tk.StringVar(value = "Select an Algorithm to Apply",)
+        self.current_algortihm.trace('w', self.algorithm_detector)
+        
 
 
         self.main_frame = tk.Frame(self.root)
@@ -64,8 +70,6 @@ class UI:
                                            variable = self.weight_var, onvalue=True, offvalue=False, command=self.generate_connections)
         self.weight_check.grid(row = 3, column=0)
 
-        #self.display_button = tk.Button(self.root, text='Display Graph', command = self.display_graph)
-        #self.display_button.grid(row = 3, column=0)
 
         self.clear_button = tk.Button(self.left_frame, text='Clear Graph', command = self.clear_graph)
         self.clear_button.grid(row = 5, column=0)
@@ -73,11 +77,8 @@ class UI:
         self.dropdown_label = tk.Label(self.left_frame, text=  'Choose an Algorithm to apply')
         self.dropdown_label.grid(row = 7, column=0)
 
-        self.drop = tk.OptionMenu(self.left_frame , self.clicked , *self.algorithms )
+        self.drop = tk.OptionMenu(self.left_frame , self.current_algortihm,  *self.algorithms)
         self.drop.grid(row = 8, column=0)
-
-        self.apply_algorithm_button = tk.Button(self.left_frame, text = 'Apply Algorithm', command = lambda: self.apply_algorithm(self.clicked))
-        self.apply_algorithm_button.grid(row = 9, column=0)
 
         
         self.restart_button = tk.Button(self.right_frame, text = 'Restart', command = lambda: self.restart())
@@ -110,6 +111,13 @@ class UI:
 
             self.add_weight.grid(row = int(self.edge_count/2), column=3)
             
+    
+    def algorithm_detector(self, *args):
+        algorithm = self.current_algortihm.get()
+        algo_to_function = {'DFS': self.apply_dfs, 'Kruskal': self.apply_kruskal, 'Dijkstra': self.apply_dijkstra}
+        self.algo_summary= tk.Label(self.left_frame, text="")
+        self.algo_summary.grid(row = 11, column=0)
+        return algo_to_function.get(algorithm)()
 
 
     def assign_weights(self):
@@ -178,40 +186,57 @@ class UI:
         self.image_frame = tk.Label(self.right_frame, image=photo_image)
         self.image = photo_image
         self.image_frame.grid(row = 2, column=3, rowspan=2, columnspan=2)
-        
+
+    def get_dijkstra_nodes(self):
+        return self.dijkstra_source.get(), self.dijkstra_target.get()
+    
+    def dijkstra_node_detector(self, *args):
+        return self.apply_dijkstra(self.dijkstra_source, self.dijkstra_target)
 
 
-    def apply_algorithm(self, algorithm):
-        algorithm = algorithm.get()
-        algo_to_function = {'DFS': self.apply_dfs, 'Kruskal': self.apply_kruskal}
-        return algo_to_function.get(algorithm)()
+
+    def apply_dijkstra(self, source = None, target = None):
+        self.dijkstra_source_drop = tk.OptionMenu(self.left_frame, self.dijkstra_source, *self.node_list)
+        self.dijkstra_source_drop.grid(row = 10, column = 0)
+        self.dijkstra_target_drop = tk.OptionMenu(self.left_frame, self.dijkstra_target, *self.node_list)
+        self.dijkstra_target_drop.grid(row = 10, column = 1)
+        source, target = self.get_dijkstra_nodes()
+        if source != "Source" and target != "Target":
+            source, target = self.node_dict[source], self.node_dict[target]
+            _, path_str, dijkstra_graph = dijkstra(self.graph, source, target)
+
+            self.algo_summary = tk.Label(self.left_frame, text=path_str)
+            self.algo_summary.grid(row = 11, column=0)
+
+            ig.plot(dijkstra_graph, os.path.join('tmp', 'dijkstra_graph.png'), vertex_label = self.graph.vs['name'],
+                     bbox= self.png_size, edge_label = dijkstra_graph.es['weight'])
+            self.display_algorithm("dijkstra_graph.png")
+            
 
 
-    def get_dfs_node(self):
-        self.node_drop = tk.OptionMenu(self.left_frame, self.selected_node, *self.node_list)
+
+    def dfs_node_detector(self, *args):
+        return self.apply_dfs(self.dfs_node.get())
+    
+
+    def apply_dfs(self, node = None):
+        self.node_drop = tk.OptionMenu(self.left_frame, self.dfs_node, *self.node_list)
         self.node_drop.grid(row=10, column=0)
-        return self.selected_node.get()
-    
-    
-    def apply_dfs(self):
-        x = self.get_dfs_node()
+        x = node
         if x in self.node_list:
             path, dfs_graph = dfs(self.graph, self.node_dict.get(x))
             self.algo_summary = tk.Label(self.left_frame, text=path)
             self.algo_summary.grid(row = 11, column=0)
             ig.plot(dfs_graph, os.path.join('tmp', 'dfs_graph.png'), vertex_label = self.graph.vs['name'], bbox= self.png_size)
             self.display_algorithm("dfs_graph.png")
-        print('applying dfs')
 
 
     def apply_kruskal(self):
-        cost, mst, mst_named = kruskal(self.graph)
-        print(mst_named)
+        cost, mst, _ = kruskal(self.graph)
         self.algo_summary= tk.Label(self.left_frame, text=f"Minimum spanning tree with a cost of {cost}")
         self.algo_summary.grid(row = 11, column=0)
         ig.plot(mst, os.path.join('tmp', 'kruskal_graph.png'), vertex_label = self.graph.vs['name'], bbox=self.png_size)
         self.display_algorithm("kruskal_graph.png")
-        print('applying kruskal')
 
 
     def display_algorithm(self, filename):
@@ -220,8 +245,6 @@ class UI:
         self.algo_frame = tk.Label(self.left_frame, image=photo_image)
         self.algo_image = photo_image
         self.algo_frame.grid(row = 12, column=0)
-
-
 
 
     def clear_graph(self):

@@ -71,7 +71,7 @@ def dijkstra(graph, source, target):
     '''
 
     if not graph.is_connected():
-        print("The graph must be connected in order for Dijkstra's algorithm to work.")
+        return("The graph must be connected in order for Dijkstra's algorithm to work.")
     source_name = graph.vs[source]['name']
     target_name = graph.vs[target]['name']
     distances = {vertex.index: [float('inf'), None] for vertex in graph.vs if vertex.index != source}
@@ -125,9 +125,23 @@ def dijkstra(graph, source, target):
             break
 
     path.append(source)
-    path = " -> ".join(reversed([graph.vs[node]['name'] for node in path]))
-    path = f'Path from {source_name} to {target_name} is {path} with a cost of {cost}.'
-    return path
+    path_str = " -> ".join(reversed([graph.vs[node]['name'] for node in path]))
+    path_str = f'Path from {source_name} to {target_name} is {path_str} with a cost of {cost}.'
+    path_edges = []
+    for ix, item in enumerate(path):
+        if ix == len(path) - 1:
+            break
+        path_edges.append([item, path[ix+1]])
+
+    dijkstra_graph = graph.copy()
+    for edge in dijkstra_graph.es:
+        st = [edge.source, edge.target]
+        ts = [edge.target, edge.source]
+        if  st in path_edges or ts in path_edges:
+            edge['color'] = 'red'
+
+
+    return path, path_str, dijkstra_graph
 
 
 def articulation_point(graph):
