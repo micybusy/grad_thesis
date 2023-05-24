@@ -147,13 +147,20 @@ def dijkstra(graph, source, target):
 def articulation_point(graph):
     vertices = [vertex.index for vertex in list(graph.vs())]
     articulation_points = []
+    articulation_points_named = []
     for vertex in vertices:
         x = graph.copy()
         x.delete_vertices(vertex)
         if not x.is_connected():
-            articulation_points.append(graph.vs[vertex]['name'])
-                
-    return articulation_points
+            articulation_points_named.append(graph.vs[vertex]['name'])
+            articulation_points.append(vertex)
+
+    graph_aps = graph.copy()
+    for v in graph_aps.vs:
+        if v['name'] in articulation_points_named: 
+            v['color'] = 'yellow'
+    
+    return graph_aps, articulation_points_named, articulation_points
 
 def find_bridges(graph):
     edges = [(edge.source, edge.target) for edge in list(graph.es())]
@@ -165,14 +172,20 @@ def find_bridges(graph):
         x.delete_edges(edge)
         if len(x.connected_components()) != num_clusters:
             bridges.append(edge)
-    if not bridges:
-        print("There are no bridges on this graph.")
-        return
-    return bridges
+    
+    bridged_graph = graph.copy()
+    for edge in bridged_graph.es:
+        st = (edge.source, edge.target)
+        ts = (edge.target, edge.source)
+        if st in bridges or ts in bridges:
+            edge['color'] = 'green'
+
+    bridges_named = [[graph.vs[t[0]]['name'], graph.vs[t[1]]['name']] for t in bridges]
+    return bridges_named, bridged_graph
 
 
 def biconnected_components(graph):
-    points = articulation_point(graph)
+    _, _, points = articulation_point(graph)
     bicons = []
     if not points:
         print("There are no biconnected components on this graph.")
