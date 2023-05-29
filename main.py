@@ -14,18 +14,23 @@ class UI:
         self.weight_dict = {}
         self.row_count = 1
         self.root = tk.Tk()
-        self.algorithms = ['DFS', 'Kruskal', 'Dijkstra', 'Find Articulation Points', 'Find Bridges', 'Find Biconnected Components', 'Reverse']
-        self.weight_var = tk.BooleanVar()
-        self.weight_var = False
-        self.direction_var = tk.BooleanVar()
-        self.direction_var = False
+        self.algorithms = ['DFS (Depth First Search)', 'Directed DFS', 'Kruskal', 'Dijkstra', 'Find Articulation Points', 'Find Bridges', 'Find Biconnected Components', 'Reverse']
+        self.weight_var = tk.BooleanVar(value = False)
+        self.weight_var.trace('w', self.del_weight_widgets)
+        self.direction_var = tk.BooleanVar(value = False)
+        self.direction_var.trace('w', self.del_direction_widgets)
+
         self.root.title('Graph Theory')
         self.root.geometry('1200x600')
         self.clicked = tk.StringVar()
         self.clicked.set( "Algorithm" )
         self.dfs_node = tk.StringVar(value = "DFS Node")
         self.dfs_node.trace('w', self.dfs_node_detector)
-        self.png_size = (0, 0, 500, 300)
+        self.ddfs_node = tk.StringVar(value = "DDFS Node")
+        self.dfs_node.trace('w', self.ddfs_node_detector)
+        self.png_size = (0, 0, 600, 400)
+        self.direction_widgets = []
+        self.weight_widgets = []
         self.edge_count = 0
         self.direction_count = 0
         self.dijkstra_source = tk.StringVar(value = "Source")
@@ -40,6 +45,9 @@ class UI:
         self.direction_dict = {}
         self.directed = tk.BooleanVar(value=False)
         self.directed.trace('w', self.display_graph)
+        self.weighted = tk.BooleanVar(value=False)
+        self.weighted.trace('w', self.display_graph)
+        
 
 
 
@@ -98,7 +106,7 @@ class UI:
 
         self.drop = tk.OptionMenu(self.left_frame , self.current_algortihm,  *self.algorithms).grid(row = 8, column=0)
                 
-        self.restart_button = tk.Button(self.right_frame, text = 'Restart', command = lambda: self.restart()).grid(row = 1, column=5)
+        self.restart_button = tk.Button(self.right_frame, text = 'Restart', command = lambda: self.restart()).grid(row = 1, column=6)
         
         self.display_graph()
         self.root.mainloop()
@@ -118,17 +126,19 @@ class UI:
             for edge in self.graph.es:
                 a, b = edge.source, edge.target
                 if (a,b) not in self.weight_dict.keys():
-                    self.edge_label = tk.Label(self.weight_assign, text = f'{f(a)} -> {f(b)}').grid(row = self.edge_count+1, column=0)
-                    self.weight = tk.Entry(self.weight_assign)
+                    self.edge_label = tk.Label(self.weight_assign,  text = f'{f(a)} -> {f(b)}').grid(row = self.edge_count+1, column=0)
+                    self.weight = tk.Entry(self.weight_assign, name=f'{(a, b)}')
                     self.weight.grid(row = self.edge_count+1, column=1)
-                    self.weight_dict.update({(a, b): self.weight})
+                    self.weight_dict.update({(a, b): self.weight, (b, a): self.weight})
                     self.edge_count+=1
 
             self.add_weight.grid(row = self.edge_count + 2, column=1)
+            children = [v for _, v in self.weight_assign.children.items()]
+            self.weight_widgets.extend(children)
+
 
 
     def generate_directions(self):
-            self.directed.set(not self.directed.get())
             if self.direction_count == len(self.graph.es):
                 return
             self.direction_label = tk.Label(self.direction_assign, text= 'Directions').grid(row = 0, column=0)
@@ -172,14 +182,33 @@ class UI:
                 self.edge_memory[(a,b)] = self.direction_assign.children[f'{(a, b)}']
                 self.edge_memory[(a,b)].config(command = lambda a = a, b = b: g(a, b))
                 self.direction_count += 1
+            
+            
+    
+
+    def del_direction_widgets(self, *args):
+        self.directed.set(not self.directed.get())
+        if self.direction_var.get() == False:
+            self.direction_assign.grid_forget()
+        else:
+            self.direction_assign.grid(row = 0, column=4,  sticky="nswe")
+
+    def del_weight_widgets(self, *args):
+        self.weighted.set(not self.weighted.get())
+        if self.weight_var.get() == False:
+            self.weight_assign.grid_forget()
+        else:
+            self.weight_assign.grid(row = 0, column=3,  sticky="nswe")
+            
 
             
     
     def algorithm_detector(self, *args):
         algorithm = self.current_algortihm.get()
-        algo_to_function = {'DFS': self.apply_dfs, 'Kruskal': self.apply_kruskal, 'Dijkstra': self.apply_dijkstra, 
+        algo_to_function = {'DFS (Depth First Search)': self.apply_dfs, 'Kruskal': self.apply_kruskal, 'Dijkstra': self.apply_dijkstra, 
                             'Find Articulation Points': self.apply_articulation_point, 'Find Bridges': self.apply_find_bridges,
-                            'Find Biconnected Components': self.apply_biconnected_components, 'Reverse': self.apply_reverse}
+                            'Find Biconnected Components': self.apply_biconnected_components, 'Reverse': self.apply_reverse,
+                            'Directed DFS': self.apply_ddfs}
         
         try:
             self.algo_frame.grid_remove()
@@ -199,7 +228,6 @@ class UI:
         self.graph_copy = self.graph.copy()
         for edge in self.graph_copy.es:
             edge['weight'] = int(self.weight_dict.get((edge.source, edge.target)).get())
-        self.weight_var = True
         self.display_graph()
 
     def show_dropdown(self):
@@ -252,7 +280,7 @@ class UI:
             graph.es['weight'] = self.graph_copy.es['weight']
         except:
             pass
-        plotter(graph, self.weight_var)
+        plotter(graph, self.weighted.get())
         img = Image.open(os.path.join(os.getcwd(), 'tmp', 'graph.png'))
         photo_image = ImageTk.PhotoImage(img)
         self.image_label = tk.Label(self.right_frame, text="Preview", font=('Iosevka', 24))
@@ -269,6 +297,9 @@ class UI:
 
     def dfs_node_detector(self, *args):
         return self.apply_dfs(self.dfs_node.get())
+    
+    def ddfs_node_detector(self, *args):
+        return self.apply_ddfs(self.ddfs_node.get())
 
 
     def apply_dijkstra(self, source = None, target = None):
@@ -281,7 +312,7 @@ class UI:
             return
         
         if not self.graph.is_connected():
-            self.algo_summary = tk.Label(self.left_frame, text='Dijkstra requires directed graphs, but this graph is not (directed graphs are not connected).')
+            self.algo_summary = tk.Label(self.left_frame, text='Dijkstra requires connected graphs, but this graph is not (directed graphs are not connected).')
             self.algo_summary.grid(row = 11, column=0)
             self.widget_list.append(self.algo_summary)
             return
@@ -323,18 +354,19 @@ class UI:
 
 
     def apply_kruskal(self):
-        try:
-            cost, mst, _ = kruskal(self.graph)
-            self.algo_summary= tk.Label(self.left_frame, text=f"Minimum spanning tree with a cost of {cost}")
-            self.algo_summary.grid(row = 11, column=0)
-            self.widget_list.append(self.algo_summary)
-
-        except:
-            self.algo_summary= tk.Label(self.left_frame, text=f"Kruskal requires a weighted graph, but this graph is not.")
+        if not self.weighted.get() or not self.graph.is_connected():
+            self.algo_summary= tk.Label(self.left_frame, text=f"Kruskal requires a weighted and connected graph, but this graph is not.")
             self.algo_summary.grid(row = 11, column=0)
             self.widget_list.append(self.algo_summary)
             return
-        ig.plot(mst, os.path.join('tmp', 'kruskal_graph.png'), vertex_label = self.graph.vs['name'], bbox=self.png_size)
+
+
+        cost, mst, _ = kruskal(self.graph)
+        self.algo_summary= tk.Label(self.left_frame, text=f"Minimum spanning tree with a cost of {cost}")
+        self.algo_summary.grid(row = 11, column=0)
+        self.widget_list.append(self.algo_summary)
+
+        ig.plot(mst, os.path.join('tmp', 'kruskal_graph.png'), vertex_label = self.graph.vs['name'], edge_label = self.graph.es['weight'], bbox=self.png_size)
         self.display_algorithm("kruskal_graph.png", 12, 0)
 
     def apply_articulation_point(self):
@@ -402,6 +434,18 @@ class UI:
         self.widget_list.extend([self.algo_summary, self.prev_button, self.next_button, self.bicon_index])
 
 
+
+    def apply_ddfs(self, node = None):
+        self.node_drop = tk.OptionMenu(self.left_frame, self.ddfs_node, *self.node_list)
+        self.node_drop.grid(row=10, column=0)
+        x = node
+        if x is None:
+            return
+        if x in self.node_list:
+            path = ddfs(self.graph, self.node_dict.get(x))
+            path = path = f'The path of DDFS is {path}.'
+            print(path)
+
     def apply_reverse(self):
         reversed_graph = self.graph.copy()
         reversed_graph = reverse(reversed_graph)
@@ -417,7 +461,6 @@ class UI:
         if x < self.bicon_count:
             self.bicon_image_number.set(x+1)
             self.bicon_index.config(text = f'{self.bicon_image_number.get()}')
-
 
 
     def prev_bicon_image(self):

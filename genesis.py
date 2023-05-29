@@ -75,7 +75,7 @@ def generate_with_input(directed = False, weighted = False):
 def plotter(graph, weighted = False):
     x = graph.es['weight'] if weighted else None
     #_, ax = plt.subplots(figsize=(8,8))
-    ig.plot(graph, os.path.join('tmp', 'graph.png'), vertex_label = graph.vs['name'], edge_label = x,  vertex_color = 'green', bbox = (0, 0, 500, 300)) 
+    ig.plot(graph, os.path.join('tmp', 'graph.png'), vertex_label = graph.vs['name'], edge_label = x, vertex_size = 40, vertex_color = 'green', bbox = (0, 0, 600, 400)) 
     plt.show()
 
 if __name__ == "__main__":
