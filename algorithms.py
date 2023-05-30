@@ -198,19 +198,19 @@ def biconnected_components(graph):
 
 
 
-def ddfs(graph, v, tail = []):
-    vertices = [vertex.index for vertex in graph.vs]
+def ddfs(graph, v, tail = [], edges = []):
     if v not in tail:
         nachbarn = graph.neighbors(v, 'out')
         tail.append(v)
         for vertex in nachbarn:
-            ddfs(graph, vertex, tail)
-    if set(tail) == set(vertices):
-        return tail
-    else:
-        left = [vertex for vertex in vertices if vertex not in tail]
-        for vertex in left:
-            ddfs(graph, vertex, tail)
+            edges.append((v, vertex))
+            ddfs(graph, vertex, tail, edges)
+    copy = graph.copy()
+    for edge in copy.es:
+        tmp = (edge.source, edge.target)
+        if tmp in edges:
+            edge['color'] = "green"
+    return tail, copy
 
 def reverse(graph):
     redges = [(edge.target, edge.source) for edge in graph.es()]
@@ -218,22 +218,32 @@ def reverse(graph):
     rgraph.vs['name'] = graph.vs['name']
     return rgraph
 
-'''def strongly_connected_components(graph):
+def strongly_connected_components(graph):
     if not graph.is_directed():
-        print("This search requires a directed graph, the input was not directed.")
-        return
-    visited = []
-    str_dfs = ddfs(graph, 0)[::-1]'''
-
-#print(dfs(wcomplex3(directed= False), 0))
-#print(ddfs(scc(), 0))
+        return "This search requires a directed graph, the input was not directed."
+    else:
+        return graph.clusters(mode = "strong").subgraphs()
+        
 
 
-'''
+def topological_sort(graph):
+    if not graph.is_directed():
+        return "This search requires a directed graph, the input was not directed."
+    else:
 
-find a way to measure the finish time of nodes while doing dfs. then follow this tutorial.
-https://www.hackerearth.com/practice/algorithms/graphs/strongly-connected-components/tutorial/
-''' 
+        return graph.topological_sorting(mode = "out")
 
-# directed graphs are not recognized as connected. fix it.
-# dijkstra does not work for wcomplex
+
+
+
+"""
+Topological Sort
+Hamiltonian Path
+Min-cut, Maximum flow
+Minimum Cost Maximum Flow (ford fulkerson)
+heap sort(algo comp sf. 36, 38)
+ford fulkerson
+floyd warshall 
+Flood-fill Algorithm --needs grid and two dimensional graph with directions
+
+"""

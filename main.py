@@ -14,7 +14,8 @@ class UI:
         self.weight_dict = {}
         self.row_count = 1
         self.root = tk.Tk()
-        self.algorithms = ['DFS (Depth First Search)', 'Directed DFS', 'Kruskal', 'Dijkstra', 'Find Articulation Points', 'Find Bridges', 'Find Biconnected Components', 'Reverse']
+        self.algorithms = ['DFS (Depth First Search)', 'Directed DFS', 'Kruskal', 'Dijkstra', 'Find Articulation Points', 'Find Bridges',
+                            'Find Biconnected Components', 'Reverse', 'Find Strongly Connected Components', 'Topological Sorting']
         self.weight_var = tk.BooleanVar(value = False)
         self.weight_var.trace('w', self.del_weight_widgets)
         self.direction_var = tk.BooleanVar(value = False)
@@ -27,7 +28,7 @@ class UI:
         self.dfs_node = tk.StringVar(value = "DFS Node")
         self.dfs_node.trace('w', self.dfs_node_detector)
         self.ddfs_node = tk.StringVar(value = "DDFS Node")
-        self.dfs_node.trace('w', self.ddfs_node_detector)
+        self.ddfs_node.trace('w', self.ddfs_node_detector)
         self.png_size = (0, 0, 600, 400)
         self.direction_widgets = []
         self.weight_widgets = []
@@ -42,6 +43,8 @@ class UI:
         self.widget_list = []
         self.bicon_image_number = tk.IntVar(value=1)
         self.bicon_image_number.trace('w', self.bicon_image_detector)
+        self.scc_image_number = tk.IntVar(value = 1)
+        self.scc_image_number.trace('w', self.scc_image_detector)
         self.direction_dict = {}
         self.directed = tk.BooleanVar(value=False)
         self.directed.trace('w', self.display_graph)
@@ -189,7 +192,10 @@ class UI:
     def del_direction_widgets(self, *args):
         self.directed.set(not self.directed.get())
         if self.direction_var.get() == False:
+            self.direction_count = 0
             self.direction_assign.grid_forget()
+            for widget in self.direction_assign.children:
+                del widget
         else:
             self.direction_assign.grid(row = 0, column=4,  sticky="nswe")
 
@@ -208,7 +214,8 @@ class UI:
         algo_to_function = {'DFS (Depth First Search)': self.apply_dfs, 'Kruskal': self.apply_kruskal, 'Dijkstra': self.apply_dijkstra, 
                             'Find Articulation Points': self.apply_articulation_point, 'Find Bridges': self.apply_find_bridges,
                             'Find Biconnected Components': self.apply_biconnected_components, 'Reverse': self.apply_reverse,
-                            'Directed DFS': self.apply_ddfs}
+                            'Directed DFS': self.apply_ddfs, 'Find Strongly Connected Components': self.apply_scc, 
+                            'Topological Sorting': self.apply_topological_sorting}
         
         try:
             self.algo_frame.grid_remove()
@@ -299,6 +306,7 @@ class UI:
         return self.apply_dfs(self.dfs_node.get())
     
     def ddfs_node_detector(self, *args):
+        self.algo_summary.config(text = "")
         return self.apply_ddfs(self.ddfs_node.get())
 
 
@@ -331,7 +339,7 @@ class UI:
             self.algo_summary.grid(row = 11, column=0)
 
             ig.plot(dijkstra_graph, os.path.join('tmp', 'dijkstra_graph.png'), vertex_label = self.graph.vs['name'],
-                     bbox= self.png_size, edge_label = dijkstra_graph.es['weight'])
+                     bbox= self.png_size, edge_label = dijkstra_graph.es['weight'], vertex_size = 40)
             self.display_algorithm("dijkstra_graph.png", 12, 0)
 
         self.widget_list.extend([self.dijkstra_source_drop, self.algo_summary, self.dijkstra_target_drop])
@@ -347,7 +355,7 @@ class UI:
             path = f'The path of DFS is {path}.'
             self.algo_summary = tk.Label(self.left_frame, text=path)
             self.algo_summary.grid(row = 11, column=0)
-            ig.plot(dfs_graph, os.path.join('tmp', 'dfs_graph.png'), vertex_label = self.graph.vs['name'], bbox= self.png_size)
+            ig.plot(dfs_graph, os.path.join('tmp', 'dfs_graph.png'), vertex_label = self.graph.vs['name'], bbox= self.png_size, vertex_size = 40)
             self.display_algorithm("dfs_graph.png", 12, 0)
 
         self.widget_list.extend([self.node_drop, self.algo_summary])
@@ -366,7 +374,7 @@ class UI:
         self.algo_summary.grid(row = 11, column=0)
         self.widget_list.append(self.algo_summary)
 
-        ig.plot(mst, os.path.join('tmp', 'kruskal_graph.png'), vertex_label = self.graph.vs['name'], edge_label = self.graph.es['weight'], bbox=self.png_size)
+        ig.plot(mst, os.path.join('tmp', 'kruskal_graph.png'), vertex_label = self.graph.vs['name'], edge_label = self.graph.es['weight'], bbox=self.png_size, vertex_size = 40)
         self.display_algorithm("kruskal_graph.png", 12, 0)
 
     def apply_articulation_point(self):
@@ -380,7 +388,7 @@ class UI:
 
         self.algo_summary= tk.Label(self.left_frame, text=txt)
         self.algo_summary.grid(row = 11, column=0)
-        ig.plot(graph_aps, os.path.join('tmp', 'articulation_points_graph.png'), vertex_label = graph_aps.vs['name'], bbox = self.png_size)
+        ig.plot(graph_aps, os.path.join('tmp', 'articulation_points_graph.png'), vertex_label = graph_aps.vs['name'], bbox = self.png_size, vertex_size = 40)
         self.display_algorithm('articulation_points_graph.png', 12, 0)
         self.widget_list.append(self.algo_summary)
 
@@ -397,7 +405,7 @@ class UI:
             txt = 'There are no bridges on this graph.'
         self.algo_summary= tk.Label(self.left_frame, text=txt)
         self.algo_summary.grid(row = 11, column=0)
-        ig.plot(bridged_graph, os.path.join('tmp', 'bridges_graph.png'), vertex_label = bridged_graph.vs['name'], bbox = self.png_size)
+        ig.plot(bridged_graph, os.path.join('tmp', 'bridges_graph.png'), vertex_label = bridged_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
         self.display_algorithm('bridges_graph.png', 12, 0)
 
         self.widget_list.append(self.algo_summary)
@@ -412,7 +420,7 @@ class UI:
         
         self.bicon_count = len(bicons)
         for ix, bicon in enumerate(bicons):
-            ig.plot(bicon, os.path.join('tmp', f'bicon_graph_{ix+1}.png'), vertex_label = bicon.vs['name'], bbox = self.png_size)
+            ig.plot(bicon, os.path.join('tmp', f'bicon_graph_{ix+1}.png'), vertex_label = bicon.vs['name'], bbox = self.png_size, vertex_size = 40)
 
         self.display_algorithm(f'bicon_graph_1.png', 13, 1)
 
@@ -436,22 +444,79 @@ class UI:
 
 
     def apply_ddfs(self, node = None):
-        self.node_drop = tk.OptionMenu(self.left_frame, self.ddfs_node, *self.node_list)
-        self.node_drop.grid(row=10, column=0)
-        x = node
-        if x is None:
+        self.ddfs_node_drop = tk.OptionMenu(self.left_frame, self.ddfs_node, *self.node_list)
+        self.ddfs_node_drop.grid(row=10, column=0)
+        self.algo_summary= tk.Label(self.left_frame, text = "")
+        self.algo_summary.grid(row = 11, column=0)
+        self.widget_list.extend([self.ddfs_node_drop, self.algo_summary])
+
+        if node is None:
             return
-        if x in self.node_list:
-            path = ddfs(self.graph, self.node_dict.get(x))
-            path = path = f'The path of DDFS is {path}.'
-            print(path)
+        if node in self.node_list:
+            path, ddfs_graph = ddfs(self.graph, self.node_dict.get(node), tail = [], edges = [])
+            inv_node_dict = {v:k for k, v in self.node_dict.items()}
+            if len(path) == 1:
+                self.algo_summary.config(text = f"Node {node} is a terminal node.")
+                self.algo_summary.grid()
+                return
+            path_str = "The path of Directed DFS is: "
+            path_str += '->'.join([inv_node_dict.get(x) for x in path])
+            self.algo_summary.config(text= path_str)
+            self.algo_summary.grid(row = 11, column=0)
+
+            ig.plot(ddfs_graph, os.path.join('tmp', 'ddfs_graph.png'), vertex_label = ddfs_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+            self.display_algorithm('ddfs_graph.png', 12, 0)
 
     def apply_reverse(self):
         reversed_graph = self.graph.copy()
         reversed_graph = reverse(reversed_graph)
-        ig.plot(reversed_graph, os.path.join('tmp', 'reversed_graph.png'), vertex_label = reversed_graph.vs['name'], bbox = self.png_size)
+        ig.plot(reversed_graph, os.path.join('tmp', 'reversed_graph.png'), vertex_label = reversed_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
         self.display_algorithm('reversed_graph.png', 12, 0)
     
+    
+    def apply_scc(self):
+        ret = strongly_connected_components(self.graph.copy())
+
+        if type(ret) == list:
+            ret = [g for g in ret if len(g.vs) > 1]
+            if len(ret) == 0:
+                self.algo_summary= tk.Label(self.left_frame, text = "There are no strongly connected components for this graph.")
+                self.algo_summary.grid(row = 11, column=0)
+                self.widget_list.append(self.algo_summary)
+                return
+
+        if type(ret) == str:
+            self.algo_summary= tk.Label(self.left_frame, text = ret)
+            self.algo_summary.grid(row = 11, column=0)
+            self.widget_list.append(self.algo_summary)
+            return
+        else:
+            for ix, sg in enumerate(ret):
+                    ig.plot(sg, os.path.join('tmp', f'scc_graph_{ix+1}.png'), vertex_label = sg.vs['name'], bbox = self.png_size, vertex_size = 40)
+
+            self.scc_count = len(ret)
+            self.algo_summary= tk.Label(self.left_frame, text= f'There are {len(ret)} strongly connected components of this graph.')
+            self.algo_summary.grid(row = 11, column=1)
+
+        
+            self.prev_button = tk.Button(self.left_frame, text='<', command=self.prev_scc)
+            self.prev_button.grid(row = 12, column= 0)
+
+            self.scc_index = tk.Label(self.left_frame, text= f'{self.scc_image_number.get()}')
+            self.scc_index.grid(row = 12, column=1)
+
+
+            self.next_button = tk.Button(self.left_frame, text='>', command=self.next_scc)
+            self.next_button.grid(row = 12, column= 2)
+            self.display_algorithm(f'scc_graph_1.png', 13, 1)
+
+            self.widget_list.extend([self.algo_summary, self.prev_button, self.next_button, self.scc_index])
+
+
+    def apply_topological_sorting(self):
+        pass
+            
+
 
     def bicon_image_detector(self, *args):
         self.display_algorithm(f'bicon_graph_{self.bicon_image_number.get()}.png', 13, 1)
@@ -468,7 +533,23 @@ class UI:
         if x > 1:
             self.bicon_image_number.set(x-1)
             self.bicon_index.config(text = f'{self.bicon_image_number.get()}')
-            
+
+    def scc_image_detector(self, *args):
+        self.display_algorithm(f'scc_graph_{self.scc_image_number.get()}.png', 13, 1)
+
+    def next_scc(self):
+        x = self.scc_image_number.get()
+        if x < self.scc_count:
+            self.scc_image_number.set(x+1)
+            self.scc_index.config(text = f'{self.scc_image_number.get()}')
+
+    def prev_scc(self):
+        x = self.scc_image_number.get()
+        if x > 1:
+            self.scc_image_number.set(x-1)
+            self.scc_index.config(text = f'{self.scc_image_number.get()}')
+
+    
 
 
     def display_algorithm(self, filename, row, column):
