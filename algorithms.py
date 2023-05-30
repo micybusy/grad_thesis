@@ -1,39 +1,35 @@
 from samples import *
 from genesis import plotter, generate_with_input
 import igraph as ig
-def dfs(graph, v,  tail = [], weighted = False):
-    tail.append(v)
-    nachbarn = graph.neighbors(v)
-    if nachbarn:
-        for w in nachbarn:
-            if w not in tail:
-                dfs(graph, w, tail, weighted)
-    edges = [(edge.source, edge.target) for edge in graph.es]
-    path = []
-    for ix, item in enumerate(tail):
-        if ix == len(tail)-1:
-            break
-        pair = (item, tail[ix+1])
-        if pair in edges:
-            path.append(pair)
-        else:
-            temp = ix
-            while True:
-                if (tail[temp], tail[ix+1]) in edges:
-                    path.append((tail[temp], tail[ix+1]))
-                    break
-                else:
-                    temp -= 1
-    dfs_tree = ig.Graph(edges = path)
-    dfs_tree.vs['name'] = [graph.vs[vertex.index]['name'] for vertex in dfs_tree.vs]
-    if weighted:
-        for edge in dfs_tree.es:
-            certain = [item['weight'] for item in graph.es if (item.source, item.target) == (edge.source, edge.target)]
-            edge['weight'] = certain[0]
 
-    path = [(graph.vs[item[0]]['name'], graph.vs[item[1]]['name']) for item in path]
-    return path, dfs_tree
+def dfs(graph, v):
+        nv = graph.vcount()
+        added = [False for v in range(nv)]
+        left_nodes = []
+        vids = []
+        left_nodes.append((v, graph.neighbors(v)))
+        vids.append(v)
+        added[v] = True
 
+        while left_nodes:
+            v, neighbors = left_nodes[-1]
+            if neighbors:
+                neighbor = neighbors.pop()
+                if not added[neighbor]:
+                    left_nodes.append((neighbor, graph.neighbors(neighbor)))
+                    vids.append(neighbor)
+                    added[neighbor] = True
+            else:
+                left_nodes.pop()
+        path = []
+        for  ix, item in enumerate(vids):
+            if ix != len(vids) - 1:
+                path.append((item, vids[ix+1]))
+
+        dfs_tree = ig.Graph(edges = path)
+        dfs_tree.vs['name'] = [graph.vs[vertex.index]['name'] for vertex in dfs_tree.vs]
+        named_path = ' -> '.join([graph.vs[idx]['name'] for idx in vids])
+        return named_path, dfs_tree
 
 def kruskal(graph):
 
@@ -75,7 +71,7 @@ def dijkstra(graph, source, target):
     '''
 
     if not graph.is_connected():
-        print("The graph must be connected in order for Dijkstra's algorithm to work.")
+        return("The graph must be connected in order for Dijkstra's algorithm to work.")
     source_name = graph.vs[source]['name']
     target_name = graph.vs[target]['name']
     distances = {vertex.index: [float('inf'), None] for vertex in graph.vs if vertex.index != source}
@@ -129,21 +125,42 @@ def dijkstra(graph, source, target):
             break
 
     path.append(source)
-    path = " -> ".join(reversed([graph.vs[node]['name'] for node in path]))
-    path = f'Path from {source_name} to {target_name} is {path} with a cost of {cost}.'
-    return path
+    path_str = " -> ".join(reversed([graph.vs[node]['name'] for node in path]))
+    path_str = f'Path from {source_name} to {target_name} is {path_str} with a cost of {cost}.'
+    path_edges = []
+    for ix, item in enumerate(path):
+        if ix == len(path) - 1:
+            break
+        path_edges.append([item, path[ix+1]])
+
+    dijkstra_graph = graph.copy()
+    for edge in dijkstra_graph.es:
+        st = [edge.source, edge.target]
+        ts = [edge.target, edge.source]
+        if  st in path_edges or ts in path_edges:
+            edge['color'] = 'red'
+
+
+    return path, path_str, dijkstra_graph
 
 
 def articulation_point(graph):
     vertices = [vertex.index for vertex in list(graph.vs())]
     articulation_points = []
+    articulation_points_named = []
     for vertex in vertices:
         x = graph.copy()
         x.delete_vertices(vertex)
         if not x.is_connected():
-            articulation_points.append(graph.vs[vertex]['name'])
-                
-    return articulation_points
+            articulation_points_named.append(graph.vs[vertex]['name'])
+            articulation_points.append(vertex)
+
+    graph_aps = graph.copy()
+    for v in graph_aps.vs:
+        if v['name'] in articulation_points_named: 
+            v['color'] = 'yellow'
+    
+    return graph_aps, articulation_points_named, articulation_points
 
 def find_bridges(graph):
     edges = [(edge.source, edge.target) for edge in list(graph.es())]
@@ -155,14 +172,20 @@ def find_bridges(graph):
         x.delete_edges(edge)
         if len(x.connected_components()) != num_clusters:
             bridges.append(edge)
-    if not bridges:
-        print("There are no bridges on this graph.")
-        return
-    return bridges
+    
+    bridged_graph = graph.copy()
+    for edge in bridged_graph.es:
+        st = (edge.source, edge.target)
+        ts = (edge.target, edge.source)
+        if st in bridges or ts in bridges:
+            edge['color'] = 'green'
+
+    bridges_named = [[graph.vs[t[0]]['name'], graph.vs[t[1]]['name']] for t in bridges]
+    return bridges_named, bridged_graph
 
 
 def biconnected_components(graph):
-    points = articulation_point(graph)
+    _, _, points = articulation_point(graph)
     bicons = []
     if not points:
         print("There are no biconnected components on this graph.")
