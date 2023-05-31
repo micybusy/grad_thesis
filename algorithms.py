@@ -265,15 +265,54 @@ def topological_sort(graph):
             ret_graphs.append([visits, copy])
         return ret_graphs
 
+def hamiltonian_path(graph):
+    if graph.is_directed():
+        return "Hamiltonian path is limited to undirected graphs, but the input is directed."
+    
+    def visit(node, visited =[], edges = []):
+        if len(visited) == len(graph.vs):
+            return visited, edges
+        else:
+            n = [v for v in graph.neighbors(node) if v not in visited]
+            if n:
+                visited.append(node)
+                for vertex in n:
+                    edges.append((node, vertex))
+                    visit(vertex, visited, edges)
 
-        
-        #ret_str = f"A possible topological sort for this graph is: {path}."
-        #return ret_str
+            else:
+                visited.append(node)
+                if len(visited) != len(graph.vs):
+                    raise Exception
+                        
+        return visited, edges
+
+
+    nodes = [vertex.index for vertex in graph.vs]
+    paths = []
+    for node in nodes:
+        try:
+            x, y = visit(node, [], [])
+            x = '->'.join([graph.vs[item]["name"] for item in x])
+            copy = graph.copy()
+            for edge in graph.es:
+                a,b= edge.source, edge.target
+                if (a,b) in y:
+                    edge['label'] = y.index((a, b)) + 1
+                    edge['color'] = "red"
+                elif (b,a) in y:
+                    edge['label'] = y.index((b, a)) + 1
+                    edge['color'] = "red"
+            paths.append((x, copy))
+
+        except:
+            pass
+
+    return paths
         
 
 
 """
-Topological Sort
 Hamiltonian Path
 Min-cut, Maximum flow
 Minimum Cost Maximum Flow (ford fulkerson)

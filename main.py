@@ -15,7 +15,8 @@ class UI:
         self.row_count = 1
         self.root = tk.Tk()
         self.algorithms = ['DFS (Depth First Search)', 'Directed DFS', 'Kruskal', 'Dijkstra', 'Find Articulation Points', 'Find Bridges',
-                            'Find Biconnected Components', 'Reverse', 'Find Strongly Connected Components', 'Topological Sorting']
+                            'Find Biconnected Components', 'Reverse', 'Find Strongly Connected Components', 'Topological Sorting', 
+                            'Find Hamiltonian Path']
         self.weight_var = tk.BooleanVar(value = False)
         self.weight_var.trace('w', self.del_weight_widgets)
         self.direction_var = tk.BooleanVar(value = False)
@@ -47,6 +48,8 @@ class UI:
         self.scc_image_number.trace('w', self.scc_image_detector)
         self.top_sort_image_number = tk.IntVar(value = 1)
         self.top_sort_image_number.trace('w', self.top_sort_image_detector)
+        self.hamiltonian_image_number = tk.IntVar(value = 1)
+        self.hamiltonian_image_number.trace('w', self.hamiltonian_image_detector)
         self.direction_dict = {}
         self.directed = tk.BooleanVar(value=False)
         self.directed.trace('w', self.display_graph)
@@ -217,7 +220,7 @@ class UI:
                             'Find Articulation Points': self.apply_articulation_point, 'Find Bridges': self.apply_find_bridges,
                             'Find Biconnected Components': self.apply_biconnected_components, 'Reverse': self.apply_reverse,
                             'Directed DFS': self.apply_ddfs, 'Find Strongly Connected Components': self.apply_scc, 
-                            'Topological Sorting': self.apply_topological_sorting}
+                            'Topological Sorting': self.apply_topological_sorting, 'Find Hamiltonian Path': self.apply_hamiltonian_path}
         
         try:
             self.algo_frame.grid_remove()
@@ -546,6 +549,56 @@ class UI:
             self.display_algorithm(f'top_sort_graph_1.png', 14, 1)
 
 
+    def apply_hamiltonian_path(self):
+        ret = hamiltonian_path(self.graph)
+        if type(ret) == str:
+            self.algo_summary= tk.Label(self.left_frame, text= ret)
+            self.algo_summary.grid(row = 11, column=0)
+            self.widget_list.append(self.algo_summary)
+        else:
+            self.enum_labels = {}
+            for ix, item in enumerate(ret):
+                tmp_label, tmp_graph = item[0], item[1]
+                tmp_label = '->'.join([n for n in tmp_label])
+                self.enum_labels.update({f'label_{ix+1}': tmp_label})
+                ig.plot(tmp_graph, os.path.join('tmp', f'hamiltonian_graph_{ix+1}.png'), vertex_label = tmp_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+                
+            self.hamiltonian_count = len(ret)
+            self.algo_summary= tk.Label(self.left_frame, text= f'{len(ret)} Hamiltonian paths found for this graph, but there may be more.')
+            self.algo_summary.grid(row = 11, column=1)
+
+            self.prev_button = tk.Button(self.left_frame, text='<', command=self.prev_hamiltonian)
+            self.prev_button.grid(row = 12, column= 0)
+
+            self.hamiltonian_index = tk.Label(self.left_frame, text= f'{self.hamiltonian_image_number.get()}')
+            self.hamiltonian_index.grid(row = 12, column=1)
+
+            self.next_button = tk.Button(self.left_frame, text='>', command=self.next_hamiltonian)
+            self.next_button.grid(row = 12, column= 2)
+
+            self.hamiltonian_path = tk.Label(self.left_frame, text = self.enum_labels.get(1))
+            self.hamiltonian_path.grid(row = 13, column=1)
+            self.display_algorithm(f'hamiltonian_graph_1.png', 14, 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def bicon_image_detector(self, *args):
         self.display_algorithm(f'bicon_graph_{self.bicon_image_number.get()}.png', 13, 1)
 
@@ -585,7 +638,7 @@ class UI:
     
     def prev_top_sort(self):
         x = self.top_sort_image_number.get()
-        if x < self.top_sort_count:
+        if x > 1:
             self.top_sort_image_number.set(x-1)
             self.top_sort_index.config(text = f'{self.top_sort_image_number.get()}')
     
@@ -594,6 +647,26 @@ class UI:
         if x < self.top_sort_count:
             self.top_sort_image_number.set(x+1)
             self.top_sort_index.config(text = f'{self.top_sort_image_number.get()}')
+
+
+    def hamiltonian_image_detector(self, *args):
+        self.hamiltonian_path.grid_forget()
+        ix = self.hamiltonian_image_number.get()
+        self.hamiltonian_path = tk.Label(self.left_frame, text = self.enum_labels.get(ix))
+        self.hamiltonian_path.grid(row = 13, column=1)
+        self.display_algorithm(f'hamiltonian_graph_{ix}.png', 14, 1)
+
+    def prev_hamiltonian(self):
+        x = self.hamiltonian_image_number.get()
+        if x > 1:
+            self.hamiltonian_image_number.set(x-1)
+            self.hamiltonian_index.config(text = f'{self.hamiltonian_image_number.get()}')
+    
+    def next_hamiltonian(self):
+        x = self.hamiltonian_image_number.get()
+        if x < self.hamiltonian_count:
+            self.hamiltonian_image_number.set(x+1)
+            self.hamiltonian_index.config(text = f'{self.hamiltonian_image_number.get()}')
 
 
     def display_algorithm(self, filename, row, column):

@@ -1,7 +1,6 @@
 import igraph as ig
 import matplotlib.pyplot as plt
 from samples import connected, disconnected, consecutive
-from algorithms import *
 import os
 
 
