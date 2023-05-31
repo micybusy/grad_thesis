@@ -229,11 +229,47 @@ def strongly_connected_components(graph):
 def topological_sort(graph):
     if not graph.is_directed():
         return "This search requires a directed graph, the input was not directed."
+    elif not graph.is_dag():
+        return "This search requires an acyclic graph, the input was cyclic."
     else:
+        vertices = [vertex.index for vertex in list(graph.vs())]
+        start_nodes = []
+        for v in vertices:
+            if not graph.neighbors(v, 'in'):
+                start_nodes.append(v)
 
-        return graph.topological_sorting(mode = "out")
+        def visit(node, visited = [], edges = {}, count = 1):
+            nachbarn = graph.neighbors(node, 'out')
+            if not nachbarn:
+                return visited, edges
+            if not node in visited:
+                visited.append(node)
+            for v in nachbarn:
+                edges.update({(node, v): count})
+                count +=1
+            visited.extend(nachbarn)
+            for v in nachbarn:
+                visit(v, visited, edges, count)
+            return visited, edges
+        
+        ret_graphs = []
+        for node in start_nodes:
+            x = visit(node, [], {}, 1)
+            visits, edges = x
+            copy = graph.copy()
+            for edge in copy.es:
+                (a, b) = (edge.source, edge.target)
+                if (a, b) in edges.keys():
+                    edge['label'] = edges.get((a, b))
+            visits = [graph.vs[vertex]['name'] for vertex in visits]
+            ret_graphs.append([visits, copy])
+        return ret_graphs
 
 
+        
+        #ret_str = f"A possible topological sort for this graph is: {path}."
+        #return ret_str
+        
 
 
 """

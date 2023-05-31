@@ -45,6 +45,8 @@ class UI:
         self.bicon_image_number.trace('w', self.bicon_image_detector)
         self.scc_image_number = tk.IntVar(value = 1)
         self.scc_image_number.trace('w', self.scc_image_detector)
+        self.top_sort_image_number = tk.IntVar(value = 1)
+        self.top_sort_image_number.trace('w', self.top_sort_image_detector)
         self.direction_dict = {}
         self.directed = tk.BooleanVar(value=False)
         self.directed.trace('w', self.display_graph)
@@ -514,8 +516,34 @@ class UI:
 
 
     def apply_topological_sorting(self):
-        pass
-            
+        ret = topological_sort(self.graph)
+        if type(ret) == str:
+            self.algo_summary= tk.Label(self.left_frame, text= ret)
+            self.algo_summary.grid(row = 11, column=0)
+            self.widget_list.append(self.algo_summary)
+        else:
+            self.enum_labels = {}
+            for ix, item in enumerate(ret):
+                tmp_label, tmp_graph = item[0], item[1]
+                tmp_label = '->'.join([n for n in tmp_label])
+                self.enum_labels.update({f'label_{ix+1}': tmp_label})
+                ig.plot(tmp_graph, os.path.join('tmp', f'top_sort_graph_{ix+1}.png'), vertex_label = tmp_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+                
+            self.top_sort_count = len(ret)
+            self.algo_summary= tk.Label(self.left_frame, text= f'There are {len(ret)} possible topological sorts for this graph.')
+            self.algo_summary.grid(row = 11, column=1)
+
+            self.prev_button = tk.Button(self.left_frame, text='<', command=self.prev_top_sort)
+            self.prev_button.grid(row = 12, column= 0)
+
+            self.top_sort_index = tk.Label(self.left_frame, text= f'{self.top_sort_image_number.get()}')
+            self.top_sort_index.grid(row = 12, column=1)
+
+            self.next_button = tk.Button(self.left_frame, text='>', command=self.next_top_sort)
+            self.next_button.grid(row = 12, column= 2)
+            self.top_sort_path = tk.Label(self.left_frame, text = self.enum_labels.get(1))
+            self.top_sort_path.grid(row = 13, column=1)
+            self.display_algorithm(f'top_sort_graph_1.png', 14, 1)
 
 
     def bicon_image_detector(self, *args):
@@ -526,8 +554,7 @@ class UI:
         if x < self.bicon_count:
             self.bicon_image_number.set(x+1)
             self.bicon_index.config(text = f'{self.bicon_image_number.get()}')
-
-
+            
     def prev_bicon_image(self):
         x = self.bicon_image_number.get()
         if x > 1:
@@ -549,7 +576,24 @@ class UI:
             self.scc_image_number.set(x-1)
             self.scc_index.config(text = f'{self.scc_image_number.get()}')
 
+    def top_sort_image_detector(self, *args):
+        self.top_sort_path.grid_forget()
+        ix = self.top_sort_image_number.get()
+        self.top_sort_path = tk.Label(self.left_frame, text = self.enum_labels.get(ix))
+        self.top_sort_path.grid(row = 13, column=1)
+        self.display_algorithm(f'top_sort_graph_{ix}.png', 14, 1)
     
+    def prev_top_sort(self):
+        x = self.top_sort_image_number.get()
+        if x < self.top_sort_count:
+            self.top_sort_image_number.set(x-1)
+            self.top_sort_index.config(text = f'{self.top_sort_image_number.get()}')
+    
+    def next_top_sort(self):
+        x = self.top_sort_image_number.get()
+        if x < self.top_sort_count:
+            self.top_sort_image_number.set(x+1)
+            self.top_sort_index.config(text = f'{self.top_sort_image_number.get()}')
 
 
     def display_algorithm(self, filename, row, column):
@@ -564,6 +608,13 @@ class UI:
         self.node_list = []
         self.node_dict = {}
         self.edge_list = []
+        self.weight_dict = {}
+        self.image_frame.grid_forget()
+        try:
+            self.algo_frame.grid_forget()
+        except:
+            pass
+
 
 
 
