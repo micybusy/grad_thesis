@@ -16,7 +16,7 @@ class UI:
         self.root = tk.Tk()
         self.algorithms = ['DFS (Depth First Search)', 'Directed DFS', 'Kruskal', 'Dijkstra', 'Find Articulation Points', 'Find Bridges',
                             'Find Biconnected Components', 'Reverse', 'Find Strongly Connected Components', 'Topological Sorting', 
-                            'Find Hamiltonian Path']
+                            'Find Hamiltonian Path', 'Ford-Fulkerson']
         self.weight_var = tk.BooleanVar(value = False)
         self.weight_var.trace('w', self.del_weight_widgets)
         self.direction_var = tk.BooleanVar(value = False)
@@ -35,10 +35,17 @@ class UI:
         self.weight_widgets = []
         self.edge_count = 0
         self.direction_count = 0
+
         self.dijkstra_source = tk.StringVar(value = "Source")
         self.dijkstra_source.trace('w', self.dijkstra_node_detector)
         self.dijkstra_target = tk.StringVar(value="Target")
         self.dijkstra_target.trace('w', self.dijkstra_node_detector)
+
+        self.ff_source = tk.StringVar(value = "Source")
+        self.ff_source.trace('w', self.ff_node_detector)
+        self.ff_target = tk.StringVar(value="Target")
+        self.ff_target.trace('w', self.ff_node_detector)
+
         self.current_algortihm = tk.StringVar(value = "Select an Algorithm to Apply",)
         self.current_algortihm.trace('w', self.algorithm_detector)
         self.widget_list = []
@@ -220,7 +227,8 @@ class UI:
                             'Find Articulation Points': self.apply_articulation_point, 'Find Bridges': self.apply_find_bridges,
                             'Find Biconnected Components': self.apply_biconnected_components, 'Reverse': self.apply_reverse,
                             'Directed DFS': self.apply_ddfs, 'Find Strongly Connected Components': self.apply_scc, 
-                            'Topological Sorting': self.apply_topological_sorting, 'Find Hamiltonian Path': self.apply_hamiltonian_path}
+                            'Topological Sorting': self.apply_topological_sorting, 'Find Hamiltonian Path': self.apply_hamiltonian_path,
+                            'Ford-Fulkerson': self.apply_ford_fulkerson}
         
         try:
             self.algo_frame.grid_remove()
@@ -306,6 +314,15 @@ class UI:
     
     def dijkstra_node_detector(self, *args):
         return self.apply_dijkstra(self.dijkstra_source, self.dijkstra_target)
+    
+    def get_ff_nodes(self):
+        try:
+            return self.node_dict.get(self.ff_source.get()), self.node_dict.get(self.ff_target.get())
+        except:
+            return 0, 0
+
+    def ff_node_detector(self, *args):
+        return self.apply_ford_fulkerson(self.ff_source, self.ff_target)
 
     def dfs_node_detector(self, *args):
         return self.apply_dfs(self.dfs_node.get())
@@ -564,8 +581,17 @@ class UI:
                 ig.plot(tmp_graph, os.path.join('tmp', f'hamiltonian_graph_{ix+1}.png'), vertex_label = tmp_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
                 
             self.hamiltonian_count = len(ret)
-            self.algo_summary= tk.Label(self.left_frame, text= f'{len(ret)} Hamiltonian paths found for this graph, but there may be more.')
-            self.algo_summary.grid(row = 11, column=1)
+            self.algo_summary= tk.Label(self.left_frame, text= "")
+
+            if len(ret) == 0:
+                self.algo_summary.config(text = "No hamiltonian paths found for this graph.")
+                self.algo_summary.grid(row = 11, column=0)
+                self.widget_list.append(self.algo_summary)
+                return
+            else:
+                self.algo_summary.config(text = f'{len(ret)} Hamiltonian paths found for this graph, but there may be more.')
+                self.algo_summary.grid(row = 11, column=1)
+
 
             self.prev_button = tk.Button(self.left_frame, text='<', command=self.prev_hamiltonian)
             self.prev_button.grid(row = 12, column= 0)
@@ -579,7 +605,45 @@ class UI:
             self.hamiltonian_path = tk.Label(self.left_frame, text = self.enum_labels.get(1))
             self.hamiltonian_path.grid(row = 13, column=1)
             self.display_algorithm(f'hamiltonian_graph_1.png', 14, 1)
+            self.widget_list.extend([self.prev_button, self.next_button, self.hamiltonian_index, self.hamiltonian_path])
 
+
+
+
+    def apply_ford_fulkerson(self, source = 0, target = 0):
+        ret = ford_fulkerson(self.graph, source, target)
+        if type(ret) == str:
+            self.algo_summary= tk.Label(self.left_frame, text= ret)
+            self.algo_summary.grid(row = 11, column=0)
+            self.widget_list.append(self.algo_summary)
+            return
+        
+        self.ff_source_drop = tk.OptionMenu(self.left_frame, self.ff_source, *self.node_list)
+        self.ff_source_drop.grid(row = 10, column = 0)
+        self.ff_target_drop = tk.OptionMenu(self.left_frame, self.ff_target, *self.node_list)
+        self.ff_target_drop.grid(row = 10, column = 1)
+        source, target = self.get_ff_nodes()
+        txt, ff_graph_max, ff_graph_min = ford_fulkerson(self.graph, source, target)
+        if not txt and not ff_graph_max and not ff_graph_min:
+            return
+        self.algo_summary= tk.Label(self.left_frame, text= txt)
+        self.algo_summary.grid(row = 11, column=0)
+        self.widget_list.append(self.algo_summary)
+        ig.plot(ff_graph_max, os.path.join('tmp', 'ff_graph_max_flow.png'),
+                 vertex_label = ff_graph_max.vs['name'], edge_label = ff_graph_max.es['weight'], bbox = self.png_size, vertex_size = 40)
+        self.display_algorithm('ff_graph_max_flow.png', 12, 0)
+
+
+        # CAN'T DISPLAY TWO ALGO IMAGES SIDE BY SIDE. FIX IT. 
+        self.algo_summary= tk.Label(self.left_frame, text= "And the minimum cut passes through the edges highlighted below.")
+        self.algo_summary.grid(row = 11, column=1)
+        self.widget_list.append(self.algo_summary)
+
+        ig.plot(ff_graph_min, os.path.join('tmp', 'ff_graph_min_cut.png'),
+                 vertex_label = ff_graph_min.vs['name'], edge_label = ff_graph_min.es['weight'], bbox = self.png_size, vertex_size = 40)
+        
+        self.display_algorithm('ff_graph_min_cut.png', 12, 1)
+        
 
 
 

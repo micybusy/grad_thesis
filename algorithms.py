@@ -1,6 +1,7 @@
 from samples import *
 from genesis import plotter, generate_with_input
 import igraph as ig
+from igraph import _maxflow
 
 def dfs(graph, v):
         nv = graph.vcount()
@@ -309,15 +310,45 @@ def hamiltonian_path(graph):
             pass
 
     return paths
-        
+
+
+def ford_fulkerson(graph, source=0, target=0):
+    if not graph.is_directed():
+        return "Ford-Fulkerson algorithm requires a directed graph."
+    try:
+        graph.es['weight']
+    except:
+        return "Ford-Fulkerson algorithm requires a weighted graph."
+    if not graph.copy().as_undirected().is_connected():
+        return "Ford-Fulkerson algorithm requires a connected graph."
+    
+    try:
+        c = graph.copy()
+        ret = c.maxflow(source = source, target = target, capacity = c.es['weight'])
+        for ix, val in enumerate(ret.flow):
+            c.es[ix]['weight'] = int(val)
+            if val != 0:
+                c.es[ix]['color'] = 'green'
+            else:
+                c.es[ix]['color'] = 'gray'
+        c2 = graph.copy()
+        min_cut= [(e.source, e.target) for e in ret.es]
+        for edge in c2.es():
+            if (edge.source, edge.target) not in min_cut:
+                edge['color'] = 'gray'
+            else:
+                edge['color'] = 'yellow'
+        txt = f"Maximum flow for this setting is {int(ret.value)}."
+        return txt, c, c2
+
+    except:
+        return None, None, None
+
+
 
 
 """
-Hamiltonian Path
-Min-cut, Maximum flow
-Minimum Cost Maximum Flow (ford fulkerson)
 heap sort(algo comp sf. 36, 38)
-ford fulkerson
 floyd warshall 
 Flood-fill Algorithm --needs grid and two dimensional graph with directions
 
