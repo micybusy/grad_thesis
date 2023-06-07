@@ -71,10 +71,14 @@ def generate_with_input(directed = False, weighted = False):
     return g
 
 
-def plotter(graph, weighted = False):
-    x = graph.es['weight'] if weighted else None
+def plotter(graph):
+    try:
+        x = graph.es['weight']
+    except:
+        x = None
     #_, ax = plt.subplots(figsize=(8,8))
-    ig.plot(graph, os.path.join('tmp', 'graph.png'), vertex_label = graph.vs['name'], edge_label = x, vertex_size = 40, vertex_color = 'green', bbox = (0, 0, 600, 400)) 
+    ig.plot(graph, os.path.join('tmp', 'graph.png'), vertex_label = graph.vs['name'], edge_label = x, vertex_size = 40, vertex_color = 'steelblue', bbox = (0, 0, 600, 400),
+             edge_align_label=True, edge_background='white', layout = 'circle') 
     plt.show()
 
 if __name__ == "__main__":

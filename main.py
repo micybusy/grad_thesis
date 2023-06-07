@@ -6,6 +6,7 @@ import igraph as ig
 from PIL import ImageTk, Image
 import os
 import sys
+import dataframe_image as dfi
 class UI:
 
     def __init__(self):
@@ -16,7 +17,7 @@ class UI:
         self.root = tk.Tk()
         self.algorithms = ['DFS (Depth First Search)', 'Directed DFS', 'Kruskal', 'Dijkstra', 'Find Articulation Points', 'Find Bridges',
                             'Find Biconnected Components', 'Reverse', 'Find Strongly Connected Components', 'Topological Sorting', 
-                            'Find Hamiltonian Path', 'Ford-Fulkerson']
+                            'Find Hamiltonian Path', 'Ford-Fulkerson',  'All Shortest Paths']
         self.weight_var = tk.BooleanVar(value = False)
         self.weight_var.trace('w', self.del_weight_widgets)
         self.direction_var = tk.BooleanVar(value = False)
@@ -228,15 +229,17 @@ class UI:
                             'Find Biconnected Components': self.apply_biconnected_components, 'Reverse': self.apply_reverse,
                             'Directed DFS': self.apply_ddfs, 'Find Strongly Connected Components': self.apply_scc, 
                             'Topological Sorting': self.apply_topological_sorting, 'Find Hamiltonian Path': self.apply_hamiltonian_path,
-                            'Ford-Fulkerson': self.apply_ford_fulkerson}
+                            'Ford-Fulkerson': self.apply_ford_fulkerson, 'All Shortest Paths': self.apply_all_shortest_paths}
         
         try:
             self.algo_frame.grid_remove()
         except:
             pass
-        for ix, widget in enumerate(self.widget_list):
+        for widget in self.widget_list:
             widget.grid_remove()
-            self.widget_list.pop(ix)
+
+        self.widget_list = []        
+        
 
         self.algo_summary= tk.Label(self.left_frame, text="")
         self.algo_summary.grid(row = 11, column=0)
@@ -300,7 +303,7 @@ class UI:
             graph.es['weight'] = self.graph_copy.es['weight']
         except:
             pass
-        plotter(graph, self.weighted.get())
+        plotter(graph)
         img = Image.open(os.path.join(os.getcwd(), 'tmp', 'graph.png'))
         photo_image = ImageTk.PhotoImage(img)
         self.image_label = tk.Label(self.right_frame, text="Preview", font=('Iosevka', 24))
@@ -333,38 +336,45 @@ class UI:
 
 
     def apply_dijkstra(self, source = None, target = None):
-        try:
-            self.graph.es['weight']
-        except:
-            self.algo_summary = tk.Label(self.left_frame, text='Dijkstra requires a weighted graph, but this graph is not.')
-            self.algo_summary.grid(row = 11, column=0)
+        ret = dijkstra(self.graph, source, target)
+        if type(ret) == str:
+            self.algo_summary = tk.Label(self.left_frame, text="")
+            self.algo_summary.grid_forget()
+            self.algo_summary.config(text = ret)
+            self.algo_summary.grid(row = 12, column=0)
             self.widget_list.append(self.algo_summary)
             return
         
-        if not self.graph.is_connected():
-            self.algo_summary = tk.Label(self.left_frame, text='Dijkstra requires connected graphs, but this graph is not (directed graphs are not connected).')
-            self.algo_summary.grid(row = 11, column=0)
-            self.widget_list.append(self.algo_summary)
-            return
-
         self.dijkstra_source_drop = tk.OptionMenu(self.left_frame, self.dijkstra_source, *self.node_list)
         self.dijkstra_source_drop.grid(row = 10, column = 0)
         self.dijkstra_target_drop = tk.OptionMenu(self.left_frame, self.dijkstra_target, *self.node_list)
         self.dijkstra_target_drop.grid(row = 10, column = 1)
+        self.widget_list.extend([self.dijkstra_source_drop,  self.dijkstra_target_drop])
+
         
         source, target = self.get_dijkstra_nodes()
         if source != "Source" and target != "Target":
+            self.algo_summary = tk.Label(self.left_frame, text="")
+            self.algo_summary.grid_forget()
             source, target = self.node_dict[source], self.node_dict[target]
-            (_, path_str, dijkstra_graph) = dijkstra(self.graph, source, target)
-
-            self.algo_summary = tk.Label(self.left_frame, text=path_str)
-            self.algo_summary.grid(row = 11, column=0)
-
-            ig.plot(dijkstra_graph, os.path.join('tmp', 'dijkstra_graph.png'), vertex_label = self.graph.vs['name'],
+            ret = dijkstra(self.graph, source, target)
+            if type(ret) == str:
+                try:
+                    self.algo_frame.grid_forget()
+                except:
+                    pass
+                self.algo_summary.config(text = ret)
+                self.algo_summary.grid(row = 12, column=0)
+                self.widget_list.append(self.algo_summary)
+            else:
+                dijkstra_graph, cost = ret
+                ig.plot(dijkstra_graph, os.path.join('tmp', 'dijkstra_graph.png'), vertex_label = self.graph.vs['name'],
                      bbox= self.png_size, edge_label = dijkstra_graph.es['weight'], vertex_size = 40)
-            self.display_algorithm("dijkstra_graph.png", 12, 0)
+                self.algo_summary.config(text=f'The cost is {cost}.')
+                self.algo_summary.grid(row = 12, column=0)
+                self.display_algorithm("dijkstra_graph.png", 13, 0)
 
-        self.widget_list.extend([self.dijkstra_source_drop, self.algo_summary, self.dijkstra_target_drop])
+        self.widget_list.append(self.algo_summary)
         
 
     def apply_dfs(self, node = None):
@@ -646,7 +656,10 @@ class UI:
         
 
 
-
+    def apply_all_shortest_paths(self):
+        ret = all_shortest_paths(self.graph)
+        dfi.export(ret, os.path.join('tmp', 'df_image.png'))
+        self.display_algorithm('df_image.png', 12, 0)
 
 
 
@@ -759,4 +772,4 @@ class UI:
         python = sys.executable
         os.execl(python, python, * sys.argv)
 
-UI() 
+UI()

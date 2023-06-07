@@ -1,7 +1,8 @@
 from samples import *
 from genesis import plotter, generate_with_input
 import igraph as ig
-from igraph import _maxflow
+import pandas as pd
+
 
 def dfs(graph, v):
         nv = graph.vcount()
@@ -70,79 +71,28 @@ def dijkstra(graph, source, target):
     This function computes the shortest path from a source node to a target node
     with dijkstra's algorithm.
     '''
+    try:
+        graph.es['weight']
+    except:
+        return("The graph must be weighted in order for Dijkstra's algorithm to work.")
+    
+    if (type(source), type(target)) == (int, int):
+        ret = graph.get_shortest_paths(source, to = target, weights = graph.es['weight'], output = "epath")
+        if ret[0]:
+            c = graph.copy()
+            cost = 0
+            for edge in ret[0]:
+                c.es.select(edge)['color'] = 'red'
+                cost += c.es.select(edge)['weight'][0]
+            return c, cost
+        else:
+            return(f"A path could not be found from {graph.vs.select(source)['name'][0]} to {graph.vs.select(target)['name'][0]}.")
 
-    if not graph.is_connected():
-        return("The graph must be connected in order for Dijkstra's algorithm to work.")
-    source_name = graph.vs[source]['name']
-    target_name = graph.vs[target]['name']
-    distances = {vertex.index: [float('inf'), None] for vertex in graph.vs if vertex.index != source}
-    distances[source] = [0, None]
-    unvisited  = [vertex.index for vertex in graph.vs]
-    weights = {edge: weight for edge, weight in zip(graph.get_edgelist(), graph.es['weight'])}
-    visited = []
-    while True:
-        if not unvisited:
-            break
-        dummy = {k: v for k, v in distances.items() if k in unvisited}
-        node = next(iter(sorted(dummy, key = lambda x: dummy[x][0])))
-        for neighbor in graph.neighbors(node):
-            if neighbor in visited:
-                continue
-            if distances[neighbor][0] == float('inf'):
-                try:
-                    distances[neighbor][0] = weights[(node, neighbor)]
-                    distances[neighbor][1] = node
-                except:
-                    distances[neighbor][0] = weights[(neighbor, node)]
-                    distances[neighbor][1] = node
-            else: 
-                try:
-                    relative_cost = distances[neighbor][0] + weights[(node, neighbor)]
-                except:
-                    relative_cost = distances[neighbor][0] + weights[(neighbor, node)]
-                
-                try:
-                    direct_cost = weights[(source, neighbor)]
-                except:
-                    try:
-                        direct_cost = weights[(neighbor, source)]
-                    except:
-                        direct_cost = float('inf')
-
-                if relative_cost >= direct_cost:
-                    distances[neighbor] = [direct_cost, source]
-                else:
-                    distances[neighbor] = [relative_cost, node]
-        x = unvisited.pop(unvisited.index(node))
-        visited.append(x)
-    path = []
-    cost = 0
-    while True:
-        dest = target
-        step, target = distances[dest]
-        cost += step
-        path.append(dest)
-        if not target:
-            break
-
-    path.append(source)
-    path_str = " -> ".join(reversed([graph.vs[node]['name'] for node in path]))
-    path_str = f'Path from {source_name} to {target_name} is {path_str} with a cost of {cost}.'
-    path_edges = []
-    for ix, item in enumerate(path):
-        if ix == len(path) - 1:
-            break
-        path_edges.append([item, path[ix+1]])
-
-    dijkstra_graph = graph.copy()
-    for edge in dijkstra_graph.es:
-        st = [edge.source, edge.target]
-        ts = [edge.target, edge.source]
-        if  st in path_edges or ts in path_edges:
-            edge['color'] = 'red'
+    else:
+        return
 
 
-    return path, path_str, dijkstra_graph
+
 
 
 def articulation_point(graph):
@@ -346,10 +296,24 @@ def ford_fulkerson(graph, source=0, target=0):
 
 
 
+def all_shortest_paths(graph):
+    found = pd.DataFrame(columns=graph.vs['name'], index=graph.vs['name'])
+    for v1 in graph.vs:
+        found[v1['name']] = {}
+        for v2 in graph.vs:
+            ret = dijkstra(graph, v1.index, v2.index)
+            if v1 == v2:
+                found[v1['name']][v2['name']] = 0
+            elif type(ret) == str:
+                 found[v1['name']][v2['name']] = 'INF'
+            else:
+                found[v1['name']][v2['name']] = ret[1]
+    return found
+
 
 """
 heap sort(algo comp sf. 36, 38)
-floyd warshall 
+floyd warshall -- CHANGED TO ALL_SHORTEST_PATHS ---DONE
 Flood-fill Algorithm --needs grid and two dimensional graph with directions
 
 """
