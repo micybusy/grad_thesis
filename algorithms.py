@@ -67,10 +67,6 @@ def kruskal(graph):
 
 def dijkstra(graph, source, target):
 
-    '''
-    This function computes the shortest path from a source node to a target node
-    with dijkstra's algorithm.
-    '''
     try:
         graph.es['weight']
     except:
@@ -86,7 +82,8 @@ def dijkstra(graph, source, target):
                 cost += c.es.select(edge)['weight'][0]
             return c, cost
         else:
-            return(f"A path could not be found from {graph.vs.select(source)['name'][0]} to {graph.vs.select(target)['name'][0]}.")
+            return(f"""A path could not be found from {graph.vs.select(source)['name'][0]} to 
+                    {graph.vs.select(target)['name'][0]}.""")
 
     else:
         return
@@ -197,7 +194,7 @@ def topological_sort(graph):
                 visited.append(node)
             for v in nachbarn:
                 edges.update({(node, v): count})
-                count +=1
+                count += 1
             visited.extend(nachbarn)
             for v in nachbarn:
                 visit(v, visited, edges, count)
@@ -221,6 +218,7 @@ def hamiltonian_path(graph):
         return "Hamiltonian path is limited to undirected graphs, but the input is directed."
     
     def visit(node, visited =[], edges = []):
+        print('visited', visited)
         if len(visited) == len(graph.vs):
             return visited, edges
         else:
@@ -313,7 +311,5 @@ def all_shortest_paths(graph):
 
 """
 heap sort(algo comp sf. 36, 38)
-floyd warshall -- CHANGED TO ALL_SHORTEST_PATHS ---DONE
 Flood-fill Algorithm --needs grid and two dimensional graph with directions
-
 """

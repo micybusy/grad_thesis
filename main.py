@@ -24,14 +24,16 @@ class UI:
         self.direction_var.trace('w', self.del_direction_widgets)
 
         self.root.title('Graph Theory')
-        self.root.geometry('1200x600')
+        self.root.geometry('1200x900')
         self.clicked = tk.StringVar()
         self.clicked.set( "Algorithm" )
         self.dfs_node = tk.StringVar(value = "DFS Node")
         self.dfs_node.trace('w', self.dfs_node_detector)
         self.ddfs_node = tk.StringVar(value = "DDFS Node")
         self.ddfs_node.trace('w', self.ddfs_node_detector)
-        self.png_size = (0, 0, 600, 400)
+        self.png_size = (0, 0, 600, 600)
+        self.vertex_size = 50
+        
         self.direction_widgets = []
         self.weight_widgets = []
         self.edge_count = 0
@@ -303,7 +305,7 @@ class UI:
             graph.es['weight'] = self.graph_copy.es['weight']
         except:
             pass
-        plotter(graph)
+        plotter(graph, vertex_size = self.vertex_size)
         img = Image.open(os.path.join(os.getcwd(), 'tmp', 'graph.png'))
         photo_image = ImageTk.PhotoImage(img)
         self.image_label = tk.Label(self.right_frame, text="Preview", font=('Iosevka', 24))
@@ -369,7 +371,7 @@ class UI:
             else:
                 dijkstra_graph, cost = ret
                 ig.plot(dijkstra_graph, os.path.join('tmp', 'dijkstra_graph.png'), vertex_label = self.graph.vs['name'],
-                     bbox= self.png_size, edge_label = dijkstra_graph.es['weight'], vertex_size = 40)
+                     bbox= self.png_size, edge_label = dijkstra_graph.es['weight'], vertex_size = self.vertex_size, margin = 50)
                 self.algo_summary.config(text=f'The cost is {cost}.')
                 self.algo_summary.grid(row = 12, column=0)
                 self.display_algorithm("dijkstra_graph.png", 13, 0)
@@ -387,7 +389,7 @@ class UI:
             path = f'The path of DFS is {path}.'
             self.algo_summary = tk.Label(self.left_frame, text=path)
             self.algo_summary.grid(row = 11, column=0)
-            ig.plot(dfs_graph, os.path.join('tmp', 'dfs_graph.png'), vertex_label = self.graph.vs['name'], bbox= self.png_size, vertex_size = 40)
+            ig.plot(dfs_graph, os.path.join('tmp', 'dfs_graph.png'), vertex_label = self.graph.vs['name'], bbox= self.png_size, vertex_size = self.vertex_size, margin = 50)
             self.display_algorithm("dfs_graph.png", 12, 0)
 
         self.widget_list.extend([self.node_drop, self.algo_summary])
@@ -406,7 +408,7 @@ class UI:
         self.algo_summary.grid(row = 11, column=0)
         self.widget_list.append(self.algo_summary)
 
-        ig.plot(mst, os.path.join('tmp', 'kruskal_graph.png'), vertex_label = self.graph.vs['name'], edge_label = self.graph.es['weight'], bbox=self.png_size, vertex_size = 40)
+        ig.plot(mst, os.path.join('tmp', 'kruskal_graph.png'), vertex_label = self.graph.vs['name'], edge_label = self.graph.es['weight'], bbox=self.png_size, vertex_size = self.vertex_size, margin = 50)
         self.display_algorithm("kruskal_graph.png", 12, 0)
 
     def apply_articulation_point(self):
@@ -420,7 +422,7 @@ class UI:
 
         self.algo_summary= tk.Label(self.left_frame, text=txt)
         self.algo_summary.grid(row = 11, column=0)
-        ig.plot(graph_aps, os.path.join('tmp', 'articulation_points_graph.png'), vertex_label = graph_aps.vs['name'], bbox = self.png_size, vertex_size = 40)
+        ig.plot(graph_aps, os.path.join('tmp', 'articulation_points_graph.png'), vertex_label = graph_aps.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
         self.display_algorithm('articulation_points_graph.png', 12, 0)
         self.widget_list.append(self.algo_summary)
 
@@ -437,7 +439,7 @@ class UI:
             txt = 'There are no bridges on this graph.'
         self.algo_summary= tk.Label(self.left_frame, text=txt)
         self.algo_summary.grid(row = 11, column=0)
-        ig.plot(bridged_graph, os.path.join('tmp', 'bridges_graph.png'), vertex_label = bridged_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+        ig.plot(bridged_graph, os.path.join('tmp', 'bridges_graph.png'), vertex_label = bridged_graph.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
         self.display_algorithm('bridges_graph.png', 12, 0)
 
         self.widget_list.append(self.algo_summary)
@@ -452,7 +454,7 @@ class UI:
         
         self.bicon_count = len(bicons)
         for ix, bicon in enumerate(bicons):
-            ig.plot(bicon, os.path.join('tmp', f'bicon_graph_{ix+1}.png'), vertex_label = bicon.vs['name'], bbox = self.png_size, vertex_size = 40)
+            ig.plot(bicon, os.path.join('tmp', f'bicon_graph_{ix+1}.png'), vertex_label = bicon.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
 
         self.display_algorithm(f'bicon_graph_1.png', 13, 1)
 
@@ -496,13 +498,13 @@ class UI:
             self.algo_summary.config(text= path_str)
             self.algo_summary.grid(row = 11, column=0)
 
-            ig.plot(ddfs_graph, os.path.join('tmp', 'ddfs_graph.png'), vertex_label = ddfs_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+            ig.plot(ddfs_graph, os.path.join('tmp', 'ddfs_graph.png'), vertex_label = ddfs_graph.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
             self.display_algorithm('ddfs_graph.png', 12, 0)
 
     def apply_reverse(self):
         reversed_graph = self.graph.copy()
         reversed_graph = reverse(reversed_graph)
-        ig.plot(reversed_graph, os.path.join('tmp', 'reversed_graph.png'), vertex_label = reversed_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+        ig.plot(reversed_graph, os.path.join('tmp', 'reversed_graph.png'), vertex_label = reversed_graph.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
         self.display_algorithm('reversed_graph.png', 12, 0)
     
     
@@ -524,7 +526,7 @@ class UI:
             return
         else:
             for ix, sg in enumerate(ret):
-                    ig.plot(sg, os.path.join('tmp', f'scc_graph_{ix+1}.png'), vertex_label = sg.vs['name'], bbox = self.png_size, vertex_size = 40)
+                    ig.plot(sg, os.path.join('tmp', f'scc_graph_{ix+1}.png'), vertex_label = sg.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
 
             self.scc_count = len(ret)
             self.algo_summary= tk.Label(self.left_frame, text= f'There are {len(ret)} strongly connected components of this graph.')
@@ -557,7 +559,7 @@ class UI:
                 tmp_label, tmp_graph = item[0], item[1]
                 tmp_label = '->'.join([n for n in tmp_label])
                 self.enum_labels.update({f'label_{ix+1}': tmp_label})
-                ig.plot(tmp_graph, os.path.join('tmp', f'top_sort_graph_{ix+1}.png'), vertex_label = tmp_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+                ig.plot(tmp_graph, os.path.join('tmp', f'top_sort_graph_{ix+1}.png'), vertex_label = tmp_graph.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
                 
             self.top_sort_count = len(ret)
             self.algo_summary= tk.Label(self.left_frame, text= f'There are {len(ret)} possible topological sorts for this graph.')
@@ -571,9 +573,11 @@ class UI:
 
             self.next_button = tk.Button(self.left_frame, text='>', command=self.next_top_sort)
             self.next_button.grid(row = 12, column= 2)
-            self.top_sort_path = tk.Label(self.left_frame, text = self.enum_labels.get(1))
-            self.top_sort_path.grid(row = 13, column=1)
-            self.display_algorithm(f'top_sort_graph_1.png', 14, 1)
+            self.top_sort_path = tk.Label(self.left_frame, text = self.enum_labels.get('label_1'))
+            self.top_sort_path.grid(row = 14, column=1)
+            self.display_algorithm(f'top_sort_graph_1.png', 13, 1)
+            
+            self.widget_list.extend([self.algo_summary, self.next_button, self.top_sort_index, self.top_sort_path])
 
 
     def apply_hamiltonian_path(self):
@@ -588,7 +592,7 @@ class UI:
                 tmp_label, tmp_graph = item[0], item[1]
                 tmp_label = '->'.join([n for n in tmp_label])
                 self.enum_labels.update({f'label_{ix+1}': tmp_label})
-                ig.plot(tmp_graph, os.path.join('tmp', f'hamiltonian_graph_{ix+1}.png'), vertex_label = tmp_graph.vs['name'], bbox = self.png_size, vertex_size = 40)
+                ig.plot(tmp_graph, os.path.join('tmp', f'hamiltonian_graph_{ix+1}.png'), vertex_label = tmp_graph.vs['name'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
                 
             self.hamiltonian_count = len(ret)
             self.algo_summary= tk.Label(self.left_frame, text= "")
@@ -601,6 +605,8 @@ class UI:
             else:
                 self.algo_summary.config(text = f'{len(ret)} Hamiltonian paths found for this graph, but there may be more.')
                 self.algo_summary.grid(row = 11, column=1)
+                self.widget_list.append(self.algo_summary)
+
 
 
             self.prev_button = tk.Button(self.left_frame, text='<', command=self.prev_hamiltonian)
@@ -612,7 +618,7 @@ class UI:
             self.next_button = tk.Button(self.left_frame, text='>', command=self.next_hamiltonian)
             self.next_button.grid(row = 12, column= 2)
 
-            self.hamiltonian_path = tk.Label(self.left_frame, text = self.enum_labels.get(1))
+            self.hamiltonian_path = tk.Label(self.left_frame, text = self.enum_labels.get('label_1'))
             self.hamiltonian_path.grid(row = 13, column=1)
             self.display_algorithm(f'hamiltonian_graph_1.png', 14, 1)
             self.widget_list.extend([self.prev_button, self.next_button, self.hamiltonian_index, self.hamiltonian_path])
@@ -640,7 +646,7 @@ class UI:
         self.algo_summary.grid(row = 11, column=0)
         self.widget_list.append(self.algo_summary)
         ig.plot(ff_graph_max, os.path.join('tmp', 'ff_graph_max_flow.png'),
-                 vertex_label = ff_graph_max.vs['name'], edge_label = ff_graph_max.es['weight'], bbox = self.png_size, vertex_size = 40)
+                 vertex_label = ff_graph_max.vs['name'], edge_label = ff_graph_max.es['weight'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
         self.display_algorithm('ff_graph_max_flow.png', 12, 0)
 
 
@@ -650,7 +656,7 @@ class UI:
         self.widget_list.append(self.algo_summary)
 
         ig.plot(ff_graph_min, os.path.join('tmp', 'ff_graph_min_cut.png'),
-                 vertex_label = ff_graph_min.vs['name'], edge_label = ff_graph_min.es['weight'], bbox = self.png_size, vertex_size = 40)
+                 vertex_label = ff_graph_min.vs['name'], edge_label = ff_graph_min.es['weight'], bbox = self.png_size, vertex_size = self.vertex_size, margin = 50)
         
         self.display_algorithm('ff_graph_min_cut.png', 12, 1)
         
@@ -660,11 +666,6 @@ class UI:
         ret = all_shortest_paths(self.graph)
         dfi.export(ret, os.path.join('tmp', 'df_image.png'))
         self.display_algorithm('df_image.png', 12, 0)
-
-
-
-
-
 
 
 
@@ -737,13 +738,17 @@ class UI:
         x = self.hamiltonian_image_number.get()
         if x > 1:
             self.hamiltonian_image_number.set(x-1)
-            self.hamiltonian_index.config(text = f'{self.hamiltonian_image_number.get()}')
+            ix = f'label_{self.hamiltonian_image_number.get()}'
+            print(ix)
+            self.hamiltonian_index.config(text = f"{self.enum_labels.get(ix)}")
     
     def next_hamiltonian(self):
         x = self.hamiltonian_image_number.get()
         if x < self.hamiltonian_count:
             self.hamiltonian_image_number.set(x+1)
-            self.hamiltonian_index.config(text = f'{self.hamiltonian_image_number.get()}')
+            ix = f'label_{self.hamiltonian_image_number.get()}'
+            print(ix)
+            self.hamiltonian_index.config(text = f"{self.enum_labels.get(ix)}")
 
 
     def display_algorithm(self, filename, row, column):
@@ -760,6 +765,10 @@ class UI:
         self.edge_list = []
         self.weight_dict = {}
         self.image_frame.grid_forget()
+        for widget in self.widget_list:
+            widget.grid_remove()
+        self.widget_list = []
+        self.del_direction_widgets()
         try:
             self.algo_frame.grid_forget()
         except:
