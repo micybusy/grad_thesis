@@ -1,5 +1,4 @@
 from samples import *
-from genesis import plotter, generate_with_input
 import igraph as ig
 import pandas as pd
 

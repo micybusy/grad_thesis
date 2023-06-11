@@ -6,7 +6,7 @@ import igraph as ig
 from PIL import ImageTk, Image
 import os
 import sys
-import dataframe_image as dfi
+from dataframe_image import export
 import matplotlib.pyplot as plt
 
 
@@ -1002,7 +1002,7 @@ class UI:
 
     def apply_all_shortest_paths(self):
         ret = all_shortest_paths(self.graph)
-        dfi.export(
+        export(
             ret,
             os.path.join("out_graphs", "df_image.png"),
             table_conversion="matplotlib",
