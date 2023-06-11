@@ -7,6 +7,7 @@ from PIL import ImageTk, Image
 import os
 import sys
 import dataframe_image as dfi
+import matplotlib.pyplot as plt
 
 
 class UI:
@@ -36,17 +37,24 @@ class UI:
         self.direction_var = tk.BooleanVar(value=False)
         self.direction_var.trace("w", self.del_direction_widgets)
 
-        self.root.title("Graph Theory")
-        self.root.geometry("1200x675")
+        self.fig_height = tk.IntVar(value=5)
+        self.fig_width = tk.IntVar(value=5)
+        self.vertex_size = tk.IntVar(value=30)
+
+
+        self.root.title("Graph Theory Algorithms")
+        self.geo = (1920, 1080)
+        self.root.geometry(f"{self.geo[0]}x{self.geo[1]}")
         self.clicked = tk.StringVar()
         self.clicked.set("Algorithm")
         self.dfs_node = tk.StringVar(value="DFS Node")
         self.dfs_node.trace("w", self.dfs_node_detector)
         self.ddfs_node = tk.StringVar(value="DDFS Node")
         self.ddfs_node.trace("w", self.ddfs_node_detector)
-        self.png_size = (0, 0, 600, 600)
-        self.vertex_size = 50
+        self.vertex_size = 0.3
+        self.vertex_size_scaled = tk.IntVar(value = 30)
 
+        
         self.direction_widgets = []
         self.weight_widgets = []
         self.edge_count = 0
@@ -61,6 +69,8 @@ class UI:
         self.ff_source.trace("w", self.ff_node_detector)
         self.ff_target = tk.StringVar(value="Target")
         self.ff_target.trace("w", self.ff_node_detector)
+        self.ff_algorithm_var = tk.StringVar(value = "Maximum Flow")
+        self.ff_algorithm_var.trace("w", self.ff_display_algorithm)
 
         self.current_algortihm = tk.StringVar(
             value="Select an Algorithm to Apply",
@@ -82,12 +92,26 @@ class UI:
         self.weighted.trace("w", self.display_graph)
 
         self.main_frame = tk.Frame(self.root)
-        self.main_frame.grid(row=0, column=0, sticky="nswe")
+        self.main_frame.grid(row=0, column=0, sticky="nswe", padx=(10, 10), pady=(10,10))
         self.left_frame = tk.Frame(self.main_frame)
         self.left_frame.grid(row=0, column=0, sticky="nswe")
 
         self.right_frame = tk.Frame(self.main_frame)
         self.right_frame.grid(row=0, column=5, sticky="nswe")
+
+        self.tweak_frame = tk.Frame(self.main_frame, highlightbackground='black', highlightthickness=2)
+        self.tweak_frame.grid(row = 0, column = 8, sticky = "nswe", rowspan=1, columnspan=3)
+        self.tweak_frame_title = tk.Label(master = self.tweak_frame, text='Tweak Visual Properties', font=('Helvetica', 12)).grid(row = 0, column=0)
+        self.vertex_size_slider = tk.Scale(master=self.tweak_frame, from_=0, to = 100, variable=self.vertex_size_scaled, 
+                                           command = self.change_vertex_size, orient='horizontal', label='Vertex Size')
+        self.vertex_size_slider.grid(row = 1, column=0)
+        self.graph_width_slider = tk.Scale(master=self.tweak_frame, from_=1, to = 7, variable=self.fig_width, 
+                                           command = self.display_graph, orient='horizontal', label='Graph Width')
+        self.graph_width_slider.grid(row = 2, column=0)   
+
+        self.graph_height_slider = tk.Scale(master=self.tweak_frame, from_=1, to = 7, variable=self.fig_height, 
+                                           command = self.display_graph, orient='horizontal', label='Graph Height')
+        self.graph_height_slider.grid(row = 3, column=0)      
 
         self.nodebox = tk.Entry(self.left_frame, width=10, font=("Helvetica", 18))
         self.nodebox.grid(row=0, column=0)
@@ -105,7 +129,7 @@ class UI:
         self.edge_button.config(state="disabled")
         self.edge_button.grid(row=2, column=1)
 
-        self.weight_assign = tk.Frame(self.main_frame)
+        self.weight_assign = tk.Frame(self.main_frame, name = 'weights')
         self.weight_assign.grid(row=0, column=3, sticky="nswe")
 
         self.add_weight = tk.Button(
@@ -242,8 +266,11 @@ class UI:
         children = [v for _, v in self.direction_assign.children.items()]
         self.widget_list.extend(children)
 
+
+
+
+
     def del_direction_widgets(self, *args):
-        
         self.directed.set(not self.directed.get())
         if self.direction_var.get() == False:
             self.direction_count = 0
@@ -281,10 +308,17 @@ class UI:
         }
 
         try:
+            self.algo_frame.config(border=0)
             self.algo_frame.grid_remove()
         except:
             pass
         for widget in self.widget_list:
+            if widget.winfo_parent().split('.')[-1] in ['weights', 'direction_assign']:
+                continue
+            try:
+                widget.config(border = 0)
+            except:
+                pass
             widget.grid_remove()
 
         self.widget_list = []
@@ -353,11 +387,11 @@ class UI:
             graph.es["weight"] = self.graph_copy.es["weight"]
         except:
             pass
-        plotter(graph, vertex_size=self.vertex_size, bbox=self.png_size)
+        plotter(graph, vertex_size=self.vertex_size, fig_size = (self.fig_width.get(), self.fig_height.get()))
         img = Image.open(os.path.join(os.getcwd(), "tmp", "graph.png"))
         photo_image = ImageTk.PhotoImage(img)
         self.image_label = tk.Label(
-            self.right_frame, text="Preview", font=("Helvetica", 20)
+            self.right_frame, text="Graph Preview", font=("Helvetica", 20)
         )
         self.image_label.grid(row=1, column=5)
         self.image_frame = tk.Label(self.right_frame, image=photo_image)
@@ -380,7 +414,26 @@ class UI:
 
     def ff_node_detector(self, *args):
         return self.apply_ford_fulkerson(self.ff_source, self.ff_target)
+    
+    def ff_display_algorithm(self, *args):
+        if self.ff_algorithm_var.get() == 'Maximum Flow':
+            self.display_algorithm('ff_graph_max_flow.png', 13, 0)
+            txt = self.ff_cost_result
+        else:
+            self.display_algorithm('ff_graph_min_cut.png', 13, 0)
+            txt = "The minimum cut passes through the edges highlighted below."
 
+        try:
+            self.algo_summary.grid_remove()
+        except:
+            pass
+
+        self.algo_summary = tk.Label(self.left_frame, text=40*' ')
+        self.algo_summary.config(text = txt)
+        self.algo_summary.grid(row = 12, column=0)
+        self.widget_list.extend([self.algo_frame, self.algo_summary])
+
+            
     def dfs_node_detector(self, *args):
         return self.apply_dfs(self.dfs_node.get())
 
@@ -424,15 +477,18 @@ class UI:
                 self.widget_list.append(self.algo_summary)
             else:
                 dijkstra_graph, cost = ret
+                fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
                 ig.plot(
-                    dijkstra_graph,
-                    os.path.join("tmp", "dijkstra_graph.png"),
+                    obj=dijkstra_graph,
+                    target = ax,
                     vertex_label=self.graph.vs["name"],
-                    bbox=self.png_size,
                     edge_label=dijkstra_graph.es["weight"],
                     vertex_size=self.vertex_size,
                     margin=50
                 )
+                fig.savefig(os.path.join("tmp", "dijkstra_graph.png"), transparent=True)
+                plt.close()
+
                 self.algo_summary.config(text=f"The cost is {cost}.")
                 self.algo_summary.grid(row=12, column=0)
                 self.display_algorithm("dijkstra_graph.png", 13, 0)
@@ -449,14 +505,16 @@ class UI:
             path = f"The path of DFS is {path}."
             self.algo_summary = tk.Label(self.left_frame, text=path)
             self.algo_summary.grid(row=11, column=0)
+            fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
             ig.plot(
                 dfs_graph,
-                os.path.join("tmp", "dfs_graph.png"),
+                target=ax,
                 vertex_label=self.graph.vs["name"],
-                bbox=self.png_size,
                 vertex_size=self.vertex_size,
                 margin=50,
             )
+            fig.savefig(os.path.join("tmp", "dfs_graph.png"), transparent=True)
+            plt.close()
             self.display_algorithm("dfs_graph.png", 12, 0)
 
         self.widget_list.extend([self.node_drop, self.algo_summary])
@@ -477,16 +535,17 @@ class UI:
         )
         self.algo_summary.grid(row=11, column=0)
         self.widget_list.append(self.algo_summary)
-
+        fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
         ig.plot(
             mst,
-            os.path.join("tmp", "kruskal_graph.png"),
+            target=ax,
             vertex_label=self.graph.vs["name"],
             edge_label=self.graph.es["weight"],
-            bbox=self.png_size,
             vertex_size=self.vertex_size,
-            margin=50,
+            margin=50
         )
+        fig.savefig(os.path.join("tmp", "kruskal_graph.png"), transparent=True)
+        plt.close()
         self.display_algorithm("kruskal_graph.png", 12, 0)
 
     def apply_articulation_point(self):
@@ -500,14 +559,16 @@ class UI:
 
         self.algo_summary = tk.Label(self.left_frame, text=txt)
         self.algo_summary.grid(row=11, column=0)
+        fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
         ig.plot(
             graph_aps,
-            os.path.join("tmp", "articulation_points_graph.png"),
+            target=ax,
             vertex_label=graph_aps.vs["name"],
-            bbox=self.png_size,
             vertex_size=self.vertex_size,
             margin=50,
         )
+        fig.savefig(os.path.join("tmp", "articulation_points_graph.png"), transparent=True)
+        plt.close()
         self.display_algorithm("articulation_points_graph.png", 12, 0)
         self.widget_list.append(self.algo_summary)
 
@@ -524,14 +585,16 @@ class UI:
             txt = "There are no bridges on this graph."
         self.algo_summary = tk.Label(self.left_frame, text=txt)
         self.algo_summary.grid(row=11, column=0)
+        fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
         ig.plot(
             bridged_graph,
-            os.path.join("tmp", "bridges_graph.png"),
+            target = ax,
             vertex_label=bridged_graph.vs["name"],
-            bbox=self.png_size,
             vertex_size=self.vertex_size,
             margin=50,
         )
+        fig.savefig(os.path.join("tmp", "bridges_graph.png"), transparent=True)
+        plt.close()
         self.display_algorithm("bridges_graph.png", 12, 0)
 
         self.widget_list.append(self.algo_summary)
@@ -548,14 +611,16 @@ class UI:
 
         self.bicon_count = len(bicons)
         for ix, bicon in enumerate(bicons):
+            fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
             ig.plot(
                 bicon,
-                os.path.join("tmp", f"bicon_graph_{ix+1}.png"),
+                target=ax,
                 vertex_label=bicon.vs["name"],
-                bbox=self.png_size,
                 vertex_size=self.vertex_size,
                 margin=50,
             )
+            fig.savefig(os.path.join("tmp", f"bicon_graph_{ix+1}.png"), transparent=True)
+            plt.close()
 
         self.display_algorithm(f"bicon_graph_1.png", 13, 1)
 
@@ -608,28 +673,31 @@ class UI:
             path_str += "->".join([inv_node_dict.get(x) for x in path])
             self.algo_summary.config(text=path_str)
             self.algo_summary.grid(row=11, column=0)
-
+            fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
             ig.plot(
                 ddfs_graph,
-                os.path.join("tmp", "ddfs_graph.png"),
+                target=ax,
                 vertex_label=ddfs_graph.vs["name"],
-                bbox=self.png_size,
                 vertex_size=self.vertex_size,
                 margin=50,
             )
+            fig.savefig(os.path.join("tmp", "ddfs_graph.png"), transparent=True)
+            plt.close()
             self.display_algorithm("ddfs_graph.png", 12, 0)
 
     def apply_reverse(self):
         reversed_graph = self.graph.copy()
         reversed_graph = reverse(reversed_graph)
+        fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
         ig.plot(
             reversed_graph,
-            os.path.join("tmp", "reversed_graph.png"),
+            target=ax,
             vertex_label=reversed_graph.vs["name"],
-            bbox=self.png_size,
             vertex_size=self.vertex_size,
-            margin=50,
+            margin=50
         )
+        fig.savefig(os.path.join("tmp", "reversed_graph.png"), transparent=True)
+        plt.close()
         self.display_algorithm("reversed_graph.png", 12, 0)
 
     def apply_scc(self):
@@ -653,15 +721,16 @@ class UI:
             return
         else:
             for ix, sg in enumerate(ret):
+                fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
                 ig.plot(
                     sg,
-                    os.path.join("tmp", f"scc_graph_{ix+1}.png"),
+                    target=ax,
                     vertex_label=sg.vs["name"],
-                    bbox=self.png_size,
                     vertex_size=self.vertex_size,
-                    margin=50,
+                    margin=50
                 )
-
+                fig.savefig(os.path.join("tmp", f"scc_graph_{ix+1}.png"), transparent=True)
+                plt.close()
             self.scc_count = len(ret)
             self.algo_summary = tk.Label(
                 self.left_frame,
@@ -701,14 +770,18 @@ class UI:
                 tmp_label, tmp_graph = item[0], item[1]
                 tmp_label = "->".join([n for n in tmp_label])
                 self.enum_labels.update({f"label_{ix+1}": tmp_label})
+                fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
+
                 ig.plot(
                     tmp_graph,
-                    os.path.join("tmp", f"top_sort_graph_{ix+1}.png"),
+                    target=ax,
                     vertex_label=tmp_graph.vs["name"],
-                    bbox=self.png_size,
                     vertex_size=self.vertex_size,
                     margin=50,
                 )
+                fig.savefig(os.path.join("tmp", f"top_sort_graph_{ix+1}.png"), transparent=True)
+                plt.close()
+
 
             self.top_sort_count = len(ret)
             self.algo_summary = tk.Label(
@@ -757,15 +830,17 @@ class UI:
             for ix, item in enumerate(ret):
                 tmp_label, tmp_graph = item[0], item[1]
                 self.enum_labels.update({f"label_{ix+1}": tmp_label})
+                fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
                 ig.plot(
                     tmp_graph,
-                    os.path.join("tmp", f"hamiltonian_graph_{ix+1}.png"),
+                    target=ax,
                     vertex_label=tmp_graph.vs["name"],
                     edge_label=tmp_graph.es["label"],
-                    bbox=self.png_size,
                     vertex_size=self.vertex_size,
                     margin=50,
                 )
+                fig.savefig(os.path.join("tmp", f"hamiltonian_graph_{ix+1}.png"),transparent=True)
+                plt.close()
 
             self.hamiltonian_count = len(ret)
             self.algo_summary = tk.Label(self.left_frame, text="")
@@ -809,7 +884,7 @@ class UI:
                     self.prev_button,
                     self.next_button,
                     self.hamiltonian_index,
-                    self.hamiltonian_path,
+                    self.hamiltonian_path
                 ]
             )
 
@@ -833,43 +908,39 @@ class UI:
         txt, ff_graph_max, ff_graph_min = ford_fulkerson(self.graph, source, target)
         if not txt and not ff_graph_max and not ff_graph_min:
             return
-        self.algo_summary = tk.Label(self.left_frame, text=txt)
-        self.algo_summary.grid(row=11, column=0)
-        self.widget_list.append(self.algo_summary)
+        self.ff_cost_result = txt
+        fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
         ig.plot(
             ff_graph_max,
-            os.path.join("tmp", "ff_graph_max_flow.png"),
+            target=ax,
             vertex_label=ff_graph_max.vs["name"],
             edge_label=ff_graph_max.es["weight"],
-            bbox=self.png_size,
             vertex_size=self.vertex_size,
             margin=50,
         )
+        fig.savefig(os.path.join("tmp", "ff_graph_max_flow.png"), transparent=True)
+        plt.close()
 
+        fig, ax = plt.subplots(figsize=(self.fig_width.get(),self.fig_height.get()))
         ig.plot(
             ff_graph_min,
-            os.path.join("tmp", "ff_graph_min_cut.png"),
+            target=ax,
             vertex_label=ff_graph_min.vs["name"],
             edge_label=ff_graph_min.es["weight"],
-            bbox=self.png_size,
             vertex_size=self.vertex_size,
             margin=50,
         )
+        fig.savefig(os.path.join("tmp", "ff_graph_min_cut.png"),transparent=True)
+        plt.close()
 
-        # TODO: Make a button that switches between max flow and min cut graphs.
-        self.display_algorithm("ff_graph_max_flow.png", 12, 0)
+        self.ff_algorithm_drop = tk.OptionMenu(
+            self.left_frame, self.ff_algorithm_var, *['Maximum Flow', 'Minimum Cut']
+        ).grid(row=11, column=0)
 
-        img = Image.open(os.path.join(os.getcwd(), "tmp", "ff_graph_min_cut.png"))
-        photo_image = ImageTk.PhotoImage(img)
-        self.algo_frame_2 = tk.Label(self.left_frame, image=photo_image)
-        self.algo_frame_2.grid(row=12, column=1)
 
-        self.algo_summary = tk.Label(
-            self.left_frame,
-            text="And the minimum cut passes through the edges highlighted below.",
-        )
-        self.algo_summary.grid(row=11, column=1)
-        self.widget_list.extend([self.algo_summary, self.algo_frame_2])
+        self.widget_list.extend([self.algo_summary, self.ff_algorithm_drop])
+
+
 
     def apply_all_shortest_paths(self):
         ret = all_shortest_paths(self.graph)
@@ -943,6 +1014,7 @@ class UI:
             ix = f"label_{self.hamiltonian_image_number.get()}"
             self.hamiltonian_path.config(text=f"{self.enum_labels.get(ix)}")
             self.hamiltonian_index.config(text=self.hamiltonian_image_number.get())
+            self.widget_list.append(self.hamiltonian_path)
 
     def next_hamiltonian(self):
         x = self.hamiltonian_image_number.get()
@@ -951,13 +1023,16 @@ class UI:
             ix = f"label_{self.hamiltonian_image_number.get()}"
             self.hamiltonian_path.config(text=f"{self.enum_labels.get(ix)}")
             self.hamiltonian_index.config(text=self.hamiltonian_image_number.get())
+            self.widget_list.append(self.hamiltonian_path)
+
 
     def display_algorithm(self, filename, row, column):
         img = Image.open(os.path.join(os.getcwd(), "tmp", filename))
         photo_image = ImageTk.PhotoImage(img)
-        self.algo_frame = tk.Label(self.left_frame, image=photo_image)
+        self.algo_frame = tk.Label(self.left_frame, image=photo_image, borderwidth=2, relief='solid')
         self.algo_image = photo_image
         self.algo_frame.grid(row=row, column=column)
+        self.widget_list.append(self.algo_frame)
 
     def clear_graph(self):
         self.node_list = []
@@ -974,6 +1049,12 @@ class UI:
             self.algo_frame.grid_forget()
         except:
             pass
+
+
+
+    def change_vertex_size(self, *args):
+        self.vertex_size = self.vertex_size_scaled.get()/100
+        self.display_graph()
 
     def restart(self):
         python = sys.executable

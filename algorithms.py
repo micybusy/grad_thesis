@@ -40,7 +40,6 @@ def kruskal(graph):
     """
 
     if not graph.is_connected():
-        print("The graph must be connected in order for Kruskal's algorithm to work.")
         return
     source_target = [(edge.source, edge.target, edge["weight"]) for edge in graph.es]
     source_target = sorted(source_target, key=lambda x: x[2])
@@ -136,7 +135,6 @@ def biconnected_components(graph):
     _, _, points = articulation_point(graph)
     bicons = []
     if not points:
-        print("There are no biconnected components on this graph.")
         return
     for point in points:
         x = graph.copy()
@@ -307,8 +305,3 @@ def all_shortest_paths(graph):
                 found[v1["name"]][v2["name"]] = ret[1]
     return found.T
 
-
-"""
-heap sort(algo comp sf. 36, 38)
-Flood-fill Algorithm --needs grid and two dimensional graph with directions
-"""

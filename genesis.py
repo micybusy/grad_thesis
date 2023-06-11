@@ -70,25 +70,25 @@ def generate_with_input(directed=False, weighted=False):
     return g
 
 
-def plotter(graph, vertex_size, bbox):
+def plotter(graph, vertex_size, fig_size):
     try:
         x = graph.es["weight"]
     except:
         x = None
-    # _, ax = plt.subplots(figsize=(8,8))
+    fig, ax = plt.subplots(figsize=fig_size)
     ig.plot(
         graph,
-        os.path.join("tmp", "graph.png"),
+        target = ax,
         vertex_label=graph.vs["name"],
         edge_label=x,
         vertex_size=vertex_size,
-        vertex_color="steelblue",
-        vertex_label_color = "white",
-        vertex_label_size = 30,
-        bbox=bbox,
+        vertex_label_color = "lightblue",
+        vertex_color="white",
+        vertex_label_size = 20,
         edge_align_label=True,
-        edge_background="white",
         layout="auto",
         margin=50
     )
+    fig.savefig(os.path.join("tmp", "graph.png"), transparent=True)
+    plt.close(fig)
     #plt.show()
