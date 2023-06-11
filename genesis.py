@@ -89,6 +89,5 @@ def plotter(graph, vertex_size, fig_size):
         layout="auto",
         margin=50
     )
-    fig.savefig(os.path.join("tmp", "graph.png"), transparent=True)
+    fig.savefig(os.path.join("out_graphs", "graph.png"), transparent=True)
     plt.close(fig)
-    #plt.show()
