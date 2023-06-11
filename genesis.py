@@ -83,10 +83,12 @@ def plotter(graph, vertex_size, bbox):
         edge_label=x,
         vertex_size=vertex_size,
         vertex_color="steelblue",
+        vertex_label_color = "white",
+        vertex_label_size = 30,
         bbox=bbox,
         edge_align_label=True,
         edge_background="white",
         layout="auto",
-        margin=50,
+        margin=50
     )
-    plt.show()
+    #plt.show()

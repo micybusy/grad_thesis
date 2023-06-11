@@ -44,7 +44,7 @@ class UI:
         self.dfs_node.trace("w", self.dfs_node_detector)
         self.ddfs_node = tk.StringVar(value="DDFS Node")
         self.ddfs_node.trace("w", self.ddfs_node_detector)
-        self.png_size = (0, 0, 400, 400)
+        self.png_size = (0, 0, 600, 600)
         self.vertex_size = 50
 
         self.direction_widgets = []
@@ -184,6 +184,7 @@ class UI:
         self.add_weight.grid(row=self.edge_count + 2, column=1)
         children = [v for _, v in self.weight_assign.children.items()]
         self.weight_widgets.extend(children)
+        self.widget_list.extend(children)
 
     def generate_directions(self):
         if self.direction_count == len(self.graph.es):
@@ -238,7 +239,11 @@ class UI:
             self.edge_memory[(a, b)].config(command=lambda a=a, b=b: g(a, b))
             self.direction_count += 1
 
+        children = [v for _, v in self.direction_assign.children.items()]
+        self.widget_list.extend(children)
+
     def del_direction_widgets(self, *args):
+        
         self.directed.set(not self.directed.get())
         if self.direction_var.get() == False:
             self.direction_count = 0
@@ -248,19 +253,21 @@ class UI:
         else:
             self.direction_assign.grid(row=0, column=4, sticky="nswe")
 
-    def del_weight_widgets(self, *args):
+    def del_weight_widgets(self,  *args):
         self.weighted.set(not self.weighted.get())
         if self.weight_var.get() == False:
             self.weight_assign.grid_forget()
+            for widget in self.weight_assign.children:
+                del widget
         else:
             self.weight_assign.grid(row=0, column=3, sticky="nswe")
 
     def algorithm_detector(self, *args):
         algorithm = self.current_algortihm.get()
         algo_to_function = {
-            "DFS (Depth First Search)": self.apply_dfs,
-            "Kruskal": self.apply_kruskal,
-            "Dijkstra": self.apply_dijkstra,
+            "DFS (Depth First Search)": self.apply_dfs, 
+            "Kruskal": self.apply_kruskal, 
+            "Dijkstra": self.apply_dijkstra, 
             "Find Articulation Points": self.apply_articulation_point,
             "Find Bridges": self.apply_find_bridges,
             "Find Biconnected Components": self.apply_biconnected_components,
@@ -424,7 +431,7 @@ class UI:
                     bbox=self.png_size,
                     edge_label=dijkstra_graph.es["weight"],
                     vertex_size=self.vertex_size,
-                    margin=50,
+                    margin=50
                 )
                 self.algo_summary.config(text=f"The cost is {cost}.")
                 self.algo_summary.grid(row=12, column=0)
@@ -962,6 +969,7 @@ class UI:
             widget.grid_remove()
         self.widget_list = []
         self.del_direction_widgets()
+        self.del_weight_widgets()
         try:
             self.algo_frame.grid_forget()
         except:

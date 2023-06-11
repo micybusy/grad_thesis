@@ -83,7 +83,8 @@ def dijkstra(graph, source, target):
                 cost += c.es.select(edge)["weight"][0]
             return c, cost
         else:
-            return f"""A path could not be found from {graph.vs.select(source)['name'][0]} to 
+            return f"""A path could not be found from 
+                    {graph.vs.select(source)['name'][0]} to 
                     {graph.vs.select(target)['name'][0]}."""
 
     else:
@@ -126,7 +127,8 @@ def find_bridges(graph):
         if st in bridges or ts in bridges:
             edge["color"] = "green"
 
-    bridges_named = [[graph.vs[t[0]]["name"], graph.vs[t[1]]["name"]] for t in bridges]
+    bridges_named = [[graph.vs[t[0]]["name"],
+                       graph.vs[t[1]]["name"]] for t in bridges]
     return bridges_named, bridged_graph
 
 
@@ -303,7 +305,7 @@ def all_shortest_paths(graph):
                 found[v1["name"]][v2["name"]] = "INF"
             else:
                 found[v1["name"]][v2["name"]] = ret[1]
-    return found
+    return found.T
 
 
 """
