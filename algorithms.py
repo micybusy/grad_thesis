@@ -38,7 +38,11 @@ def kruskal(graph):
     This function computes a Minimum Spanning Tree of the graph using Kruskal's Algorithm
     """
 
-    if not graph.is_connected():
+    try:
+        graph.es['weight']
+    except:
+        return
+    if not graph.is_directed():
         return
     source_target = [(edge.source, edge.target, edge["weight"]) for edge in graph.es]
     source_target = sorted(source_target, key=lambda x: x[2])

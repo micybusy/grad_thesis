@@ -84,10 +84,11 @@ def plotter(graph, vertex_size, fig_size):
         vertex_size=vertex_size,
         vertex_label_color = "lightblue",
         vertex_color="white",
-        vertex_label_size = 20,
+        vertex_label_size = 15,
         edge_align_label=True,
         layout="auto",
-        margin=50
+        margin=50,
+        edge_curved = 0.5
     )
     fig.savefig(os.path.join("out_graphs", "graph.png"), transparent=True)
     plt.close(fig)

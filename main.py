@@ -24,8 +24,8 @@ class UI:
             "Directed DFS",
             "Kruskal",
             "Dijkstra",
-            "Find Articulation Points",
-            "Find Bridges",
+            "Find Cut Vertices",
+            "Find Cut Edges",
             "Find Biconnected Components",
             "Reverse",
             "Find Strongly Connected Components",
@@ -320,8 +320,8 @@ class UI:
             "DFS (Depth First Search)": self.apply_dfs,
             "Kruskal": self.apply_kruskal,
             "Dijkstra": self.apply_dijkstra,
-            "Find Articulation Points": self.apply_articulation_point,
-            "Find Bridges": self.apply_find_bridges,
+            "Find Cut Vertices": self.apply_articulation_point,
+            "Find Cut Edges": self.apply_find_bridges,
             "Find Biconnected Components": self.apply_biconnected_components,
             "Reverse": self.apply_reverse,
             "Directed DFS": self.apply_ddfs,
@@ -1099,8 +1099,8 @@ class UI:
         self.node_list = []
         self.node_dict = {}
         self.edge_list = []
-        self.weight_dict = {}
         self.image_frame.grid_forget()
+        self.directed.set(False)
         for widget in self.widget_list:
             widget.grid_remove()
         self.widget_list = []
